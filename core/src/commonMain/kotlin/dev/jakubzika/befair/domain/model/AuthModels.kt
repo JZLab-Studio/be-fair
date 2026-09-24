@@ -41,6 +41,7 @@ data class TokenResponse(
 data class GenericResponse(
     val success: Boolean,
     val message: String,
+    val fields: Map<String, String>? = null,
 )
 
 /**

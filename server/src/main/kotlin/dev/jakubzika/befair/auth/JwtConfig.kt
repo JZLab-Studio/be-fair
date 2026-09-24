@@ -55,6 +55,10 @@ object JwtConfig {
     fun userIdClaim(payload: com.auth0.jwt.interfaces.Payload): String? =
         payload.getClaim(CLAIM_USER_ID).asString()
 
+    /** True only for access tokens; refresh tokens must never authenticate protected routes. */
+    fun isAccessToken(payload: com.auth0.jwt.interfaces.Payload): Boolean =
+        payload.getClaim(CLAIM_TYPE).asString() == TYPE_ACCESS
+
     /**
      * Verifies a refresh token and returns its userId, or null if the token is invalid,
      * expired, or is not actually a refresh token.

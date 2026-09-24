@@ -29,5 +29,6 @@ dependencies {
     implementation(libs.h2)
     implementation(libs.bcrypt)
     testImplementation(libs.ktor.serverTestHost)
+    testImplementation(libs.ktor.client.contentNegotiation)
     testImplementation(libs.kotlin.testJunit)
 }

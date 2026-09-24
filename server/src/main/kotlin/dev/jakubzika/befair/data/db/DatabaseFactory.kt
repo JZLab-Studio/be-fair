@@ -18,7 +18,7 @@ object DatabaseFactory {
             driver = "org.h2.Driver",
         )
         transaction {
-            SchemaUtils.create(Users)
+            SchemaUtils.create(Users, Items, ItemEvents)
         }
     }
 }
