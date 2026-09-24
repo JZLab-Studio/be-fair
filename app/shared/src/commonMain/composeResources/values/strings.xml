@@ -66,9 +66,26 @@
     <string name="screen_item_detail_back">Back</string>
 
     <!-- Add new item screen -->
-    <string name="screen_add_new_item_title">Add New Item Screen</string>
-    <string name="screen_add_new_item_create">Create Item</string>
+    <string name="screen_add_new_item_title">New item</string>
     <string name="screen_add_new_item_back">Back</string>
+    <string name="screen_add_new_item_type_label">Type</string>
+    <string name="screen_add_new_item_type_clothing">Clothing</string>
+    <string name="screen_add_new_item_type_tool">Tool</string>
+    <string name="screen_add_new_item_name_label">Name</string>
+    <string name="screen_add_new_item_name_placeholder_clothing">Navy chinos</string>
+    <string name="screen_add_new_item_name_placeholder_tool">Jigsaw</string>
+    <string name="screen_add_new_item_name_error">Give the item a name.</string>
+    <string name="screen_add_new_item_category_label">Category</string>
+    <string name="screen_add_new_item_category_placeholder_clothing">Outerwear</string>
+    <string name="screen_add_new_item_category_placeholder_tool">Power tool</string>
+    <string name="screen_add_new_item_price_label">Price paid (€)</string>
+    <string name="screen_add_new_item_price_placeholder">0.00</string>
+    <string name="screen_add_new_item_price_error">Enter what you paid.</string>
+    <string name="screen_add_new_item_date_label">Purchase date</string>
+    <string name="screen_add_new_item_date_error">Pick the purchase date.</string>
+    <string name="screen_add_new_item_hint_clothing">Cost per wear = price ÷ wears logged. Log a wear each time you put it on.</string>
+    <string name="screen_add_new_item_hint_tool">Cost per month = price ÷ months owned, counted from the purchase date.</string>
+    <string name="screen_add_new_item_submit">Add item</string>
 
     <!-- Profile screen -->
     <string name="screen_profile_title">Profile Screen</string>
