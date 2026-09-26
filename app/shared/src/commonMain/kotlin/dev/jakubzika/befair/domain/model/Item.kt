@@ -1,20 +1,15 @@
 package dev.jakubzika.befair.domain.model
 
-enum class ItemKind {
-    CLOTHING,
-    TOOL
-}
-
-sealed interface ItemStats
+sealed interface ItemUsageStats
 
 data class ClothingStats(
     val wears: Int = 0,
     val washes: Int = 0
-) : ItemStats
+) : ItemUsageStats
 
 data class ToolStats(
     val uses: Int = 0
-) : ItemStats
+) : ItemUsageStats
 
 // price ÷ wears (clothing) or price ÷ months owned (tool) — the "true cost" BeFair reveals.
 data class Item(
@@ -24,5 +19,5 @@ data class Item(
     val category: String,
     val price: Double,
     val purchased: String,
-    val stats: ItemStats
+    val stats: ItemUsageStats
 )
