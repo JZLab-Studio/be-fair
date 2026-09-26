@@ -60,6 +60,7 @@
     <string name="screen_items_tab_tools">Tools</string>
     <string name="screen_items_empty_hint_clothes">Tap +1 to log a wear for today. Open an item for more.</string>
     <string name="screen_items_empty_hint_tools">Tap +1 to log a use for today. Open an item for more.</string>
+    <string name="screen_items_load_error">Could not load your items. %1$s</string>
 
     <!-- Item row -->
     <string name="item_row_meta_clothing">%1$d wears · %2$d washes</string>
@@ -96,6 +97,7 @@
     <string name="screen_add_new_item_hint_clothing">Cost per wear = price ÷ wears logged. Log a wear each time you put it on.</string>
     <string name="screen_add_new_item_hint_tool">Cost per month = price ÷ months owned, counted from the purchase date.</string>
     <string name="screen_add_new_item_submit">Add item</string>
+    <string name="screen_add_new_item_submitting">Adding…</string>
 
     <!-- Profile screen -->
     <string name="screen_profile_title">Profile Screen</string>

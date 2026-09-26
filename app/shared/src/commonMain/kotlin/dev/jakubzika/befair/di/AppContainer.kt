@@ -41,5 +41,5 @@ class AppContainer(
         ProfileRepositoryImpl(coreContainer.httpClient)
     }
 
-    val itemRepository: ItemRepository by lazy { ItemRepositoryImpl() }
+    val itemRepository: ItemRepository by lazy { ItemRepositoryImpl(authHttpClient) }
 }

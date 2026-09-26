@@ -15,7 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import dev.jakubzika.befair.domain.AuthResult
+import dev.jakubzika.befair.domain.AppResult
 import dev.jakubzika.befair.ui.LocalAppContainer
 import dev.jakubzika.befair.ui.atoms.BeFairDimension
 import dev.jakubzika.befair.ui.atoms.PrimaryButton
@@ -38,8 +38,8 @@ fun ProfileScreen(
 
     LaunchedEffect(Unit) {
         email = when (val result = authRepository.fetchProfile()) {
-            is AuthResult.Success -> result.data.email
-            is AuthResult.Error -> result.message
+            is AppResult.Success -> result.data.email
+            is AppResult.Error -> result.message
         }
     }
 
