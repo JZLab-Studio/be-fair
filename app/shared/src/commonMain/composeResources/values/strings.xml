@@ -61,6 +61,16 @@
     <string name="screen_items_empty_hint_clothes">Tap +1 to log a wear for today. Open an item for more.</string>
     <string name="screen_items_empty_hint_tools">Tap +1 to log a use for today. Open an item for more.</string>
 
+    <!-- Item row -->
+    <string name="item_row_meta_clothing">%1$d wears · %2$d washes</string>
+    <string name="item_row_meta_tool">%1$d uses · since %2$s</string>
+    <string name="item_row_stat_per_wear">per wear</string>
+    <string name="item_row_stat_per_month">per month</string>
+    <string name="item_row_stat_placeholder">—</string>
+    <string name="item_row_quick_log_wear">Log a wear</string>
+    <string name="item_row_quick_log_use">Log a use</string>
+    <string name="item_row_content_description">%1$s, %2$s, %3$s %4$s</string>
+
     <!-- Item detail screen -->
     <string name="screen_item_detail_title">Item Detail Screen (ID: %1$s)</string>
     <string name="screen_item_detail_back">Back</string>
