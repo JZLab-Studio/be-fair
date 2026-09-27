@@ -13,7 +13,6 @@ Be-Fair is application that allows you to track cost-effectiveness of your wared
 - Kotlin Multiplatform
 - Backend: [Ktor](https://ktor.io/) server (Netty)
 - Mobile UI: [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) (Material 3), Navigation 3
-- Font: Inter (Compose resources)
 - DI: Manual container (no framework)
 
 ## Project Structure
@@ -46,7 +45,9 @@ app/shared/
 │   └── screens/      # Specific instances of templates filled with real data (e.g. LoginScreen, HomeScreen).
 ├── domain/       # Use-cases (business logic)
 ├── data/         # Repositories and controllers
-└── model/        # Model classes shared across layers
+├── model/        # Model classes shared across layers
+├── di/           # Dependency injection containers
+└── util/         # Tools and helpers
 ```
 
 ## Getting Started
@@ -95,6 +96,6 @@ OR run shell command:
 ## Development Rules
 
 For AI agents and developers:
-- [AGENTS.md](./AGENTS.md) — architecture, module ownership, boundaries, and safe-edit guidelines.
+- [AGENTS.md](/AGENTS.md) — architecture, module ownership, boundaries, and safe-edit guidelines.
 - [DESIGN.md](app/shared/src/commonMain/kotlin/dev/jakubzika/befair/ui/DESIGN.md) — design system tokens (colors, typography, spacing) and component patterns.
 - [PRD.md](./PRD.md) — product requirements and feature scope.
