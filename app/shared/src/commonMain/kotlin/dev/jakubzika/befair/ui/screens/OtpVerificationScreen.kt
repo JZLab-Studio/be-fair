@@ -6,7 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import dev.jakubzika.befair.domain.AuthResult
+import dev.jakubzika.befair.domain.AppResult
 import dev.jakubzika.befair.ui.LocalAppContainer
 import dev.jakubzika.befair.ui.templates.OtpVerificationTemplate
 import be_fair.app.shared.generated.resources.Res
@@ -47,11 +47,11 @@ fun OtpVerificationScreen(
             isLoading = true
             scope.launch {
                 when (val result = authRepository.verifyOtp(email, otp)) {
-                    is AuthResult.Success -> {
+                    is AppResult.Success -> {
                         isLoading = false
                         onVerified()
                     }
-                    is AuthResult.Error -> {
+                    is AppResult.Error -> {
                         isLoading = false
                         error = result.message
                     }

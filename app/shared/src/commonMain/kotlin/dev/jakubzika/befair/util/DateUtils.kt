@@ -1,11 +1,26 @@
 package dev.jakubzika.befair.util
 
-/**
- * ISO 8601 (yyyy-MM-dd) date helpers backing the Add Item screen's purchase-date
- * field. Actuals avoid `java.time` (requires API 26+, and the app targets
- * minSdk 24 without core library desugaring) and instead use
- * `SimpleDateFormat`/`NSDateFormatter` on Android/iOS respectively.
- */
-expect fun todayIso(): String
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 
-expect fun currentTimeMillis(): Long
+/**
+ * ISO 8601 (yyyy-MM-dd) and epoch-day helpers. The Add Item screen collects a date as an ISO
+ * string, while the server's item API speaks epoch days ([dev.jakubzika.befair.domain.model.CreateItemRequest.purchasedOn]),
+ * so both directions are needed. Backed by kotlinx-datetime, which keeps this in `commonMain`
+ * instead of the `java.time`-vs-`NSDateFormatter` expect/actual split it replaced.
+ */
+
+@OptIn(ExperimentalTime::class)
+fun todayIso(): String = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+
+@OptIn(ExperimentalTime::class)
+fun currentTimeMillis(): Long = Clock.System.now().toEpochMilliseconds()
+
+/** Null when [iso] is not a well-formed yyyy-MM-dd date -- the value is user-typed. */
+fun isoToEpochDay(iso: String): Long? =
+    runCatching { LocalDate.parse(iso).toEpochDays() }.getOrNull()
+
+fun epochDayToIso(epochDay: Long): String = LocalDate.fromEpochDays(epochDay).toString()

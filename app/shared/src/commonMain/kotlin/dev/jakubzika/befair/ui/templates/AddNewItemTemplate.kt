@@ -45,6 +45,7 @@ import be_fair.app.shared.generated.resources.screen_add_new_item_price_error
 import be_fair.app.shared.generated.resources.screen_add_new_item_price_label
 import be_fair.app.shared.generated.resources.screen_add_new_item_price_placeholder
 import be_fair.app.shared.generated.resources.screen_add_new_item_submit
+import be_fair.app.shared.generated.resources.screen_add_new_item_submitting
 import be_fair.app.shared.generated.resources.screen_add_new_item_title
 import be_fair.app.shared.generated.resources.screen_add_new_item_type_clothing
 import be_fair.app.shared.generated.resources.screen_add_new_item_type_label
@@ -63,13 +64,16 @@ private val HeaderHeight = 56.dp
 // Add Item screen per DESIGN.md: fixed header + back, a labeled Type segmented
 // control, name/category/price/date inputs, a type-specific helper hint, and a
 // single full-width primary submit. Green is used only on the submit button;
-// orange only on field errors.
+// orange only on field errors. [submitting] disables the button while the create
+// request is in flight; [errorMessage] surfaces a form-level failure from the server.
 @Composable
 fun AddNewItemTemplate(
     todayDate: String,
     onSubmit: (kind: ItemKind, name: String, category: String, price: Double, date: String) -> Unit,
     onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    submitting: Boolean = false,
+    errorMessage: String? = null
 ) {
     var kind by remember { mutableStateOf(ItemKind.CLOTHING) }
     var name by remember { mutableStateOf("") }
@@ -230,11 +234,25 @@ fun AddNewItemTemplate(
                 color = LocalBeFairExtendedColors.current.ink3
             )
 
+            if (errorMessage != null) {
+                Spacer(modifier = Modifier.height(BeFairDimension.Spacing.md))
+                Text(
+                    text = errorMessage,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+
             Spacer(modifier = Modifier.height(BeFairDimension.Spacing.lg))
 
             PrimaryButton(
                 modifier = Modifier.fillMaxWidth(),
-                title = stringResource(Res.string.screen_add_new_item_submit),
+                title = if (submitting) {
+                    stringResource(Res.string.screen_add_new_item_submitting)
+                } else {
+                    stringResource(Res.string.screen_add_new_item_submit)
+                },
+                isEnabled = !submitting,
                 onClick = ::validateAndSubmit
             )
         }

@@ -6,7 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import dev.jakubzika.befair.domain.AuthResult
+import dev.jakubzika.befair.domain.AppResult
 import dev.jakubzika.befair.ui.LocalAppContainer
 import dev.jakubzika.befair.ui.templates.AuthMode
 import dev.jakubzika.befair.ui.templates.AuthTemplate
@@ -43,11 +43,11 @@ fun AuthScreen(
                 }
                 isLoading = false
                 when (result) {
-                    is AuthResult.Success -> when (mode) {
+                    is AppResult.Success -> when (mode) {
                         AuthMode.Register -> onNavigateToOtp(email)
                         AuthMode.SignIn -> onAuthenticated()
                     }
-                    is AuthResult.Error -> serverError = result.message
+                    is AppResult.Error -> serverError = result.message
                 }
             }
         },

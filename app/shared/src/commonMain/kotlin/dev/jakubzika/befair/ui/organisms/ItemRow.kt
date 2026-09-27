@@ -39,6 +39,7 @@ import be_fair.app.shared.generated.resources.item_row_stat_placeholder
 import dev.jakubzika.befair.domain.model.ItemKind
 import dev.jakubzika.befair.domain.model.ItemResponse
 import dev.jakubzika.befair.domain.model.ItemStats
+import kotlinx.datetime.LocalDate
 import dev.jakubzika.befair.ui.atoms.BeFairDimension
 import dev.jakubzika.befair.ui.atoms.BeFairTheme
 import dev.jakubzika.befair.ui.atoms.LocalBeFairExtendedColors
@@ -191,23 +192,15 @@ private fun formatEuroCents(cents: Long): String {
     return "$sign€$whole.$fraction"
 }
 
-// Renders an epoch-day (see ItemModels.kt) as "MMM yyyy" without a datetime
-// dependency, using Howard Hinnant's civil_from_days algorithm (pure integer
-// math, proleptic Gregorian, valid in commonMain on every target).
+// Renders an epoch-day (see ItemModels.kt) as "MMM yyyy". Abbreviations are fixed
+// rather than locale-aware: kotlinx-datetime has no month-name formatting.
 private val monthAbbreviations = listOf(
     "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 )
 
 private fun formatMonthYear(epochDay: Long): String {
-    val z = epochDay + 719468
-    val era = (if (z >= 0) z else z - 146096) / 146097
-    val doe = z - era * 146097
-    val yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365
-    val doy = doe - (365 * yoe + yoe / 4 - yoe / 100)
-    val mp = (5 * doy + 2) / 153
-    val month = if (mp < 10) mp + 3 else mp - 9
-    val year = (yoe + era * 400) + if (month <= 2) 1 else 0
-    return "${monthAbbreviations[(month - 1).toInt()]} $year"
+    val date = LocalDate.fromEpochDays(epochDay)
+    return "${monthAbbreviations[date.month.ordinal]} ${date.year}"
 }
 
 @Preview(backgroundColor = 0xFFFFFF, showBackground = true)
