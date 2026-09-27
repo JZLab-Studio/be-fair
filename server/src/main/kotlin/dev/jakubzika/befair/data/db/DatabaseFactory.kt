@@ -14,7 +14,7 @@ object DatabaseFactory {
 
     fun init() {
         Database.connect(
-            url = "jdbc:h2:file:./build/befair-db;DB_CLOSE_DELAY=-1",
+            url = "jdbc:h2:file:./build/befair-db;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE",
             driver = "org.h2.Driver",
         )
         transaction {
