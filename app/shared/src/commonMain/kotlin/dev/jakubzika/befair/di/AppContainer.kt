@@ -38,16 +38,16 @@ class AppContainer(
         createHttpClient { configureBeFair(tokenStorage) }
     }
 
+    // On-device Room cache; the server stays the source of truth.
+    val database: BeFairDatabase by lazy { createBeFairDatabase() }
+
     val authRepository: AuthRepository by lazy {
-        AuthRepositoryImpl(authHttpClient, tokenStorage, userProfileStorage)
+        AuthRepositoryImpl(authHttpClient, tokenStorage, userProfileStorage, database.itemDao())
     }
 
     val profileRepository: ProfileRepository by lazy {
         ProfileRepositoryImpl(coreContainer.httpClient)
     }
-
-    // On-device Room cache; the server stays the source of truth.
-    val database: BeFairDatabase by lazy { createBeFairDatabase() }
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 

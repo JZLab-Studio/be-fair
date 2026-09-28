@@ -1,5 +1,6 @@
 package dev.jakubzika.befair.data.repository
 
+import dev.jakubzika.befair.data.local.ItemDao
 import dev.jakubzika.befair.data.network.API_BASE_URL
 import dev.jakubzika.befair.data.network.safeCall
 import dev.jakubzika.befair.data.storage.TokenStorage
@@ -24,7 +25,8 @@ class AuthRepositoryImpl(
     private val client: HttpClient,
     private val tokenStorage: TokenStorage,
     private val userProfileStorage: UserProfileStorage,
-) : AuthRepository {
+    private val itemDao: ItemDao,
+): AuthRepository {
 
     override suspend fun register(name: String, email: String, password: String): AppResult<Unit> = safeCall {
         val response: GenericResponse = client.post("$API_BASE_URL/api/auth/register") {
@@ -59,9 +61,11 @@ class AuthRepositoryImpl(
         fetchProfileInternal()
     }
 
-    override fun logout() {
+    override suspend fun logout() {
         tokenStorage.clearTokens()
         userProfileStorage.clearProfile()
+        // Drop the previous account's cached items so they never show for the next user.
+        itemDao.clear()
     }
 
     override fun isLoggedIn(): Boolean =
