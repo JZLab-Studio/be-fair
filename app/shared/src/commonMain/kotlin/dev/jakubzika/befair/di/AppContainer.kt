@@ -1,5 +1,7 @@
 package dev.jakubzika.befair.di
 
+import dev.jakubzika.befair.data.local.BeFairDatabase
+import dev.jakubzika.befair.data.local.createBeFairDatabase
 import dev.jakubzika.befair.data.network.configureBeFair
 import dev.jakubzika.befair.data.network.createHttpClient
 import dev.jakubzika.befair.data.repository.AuthRepositoryImpl
@@ -11,6 +13,9 @@ import dev.jakubzika.befair.domain.repository.AuthRepository
 import dev.jakubzika.befair.domain.repository.ItemRepository
 import dev.jakubzika.befair.domain.repository.ProfileRepository
 import io.ktor.client.HttpClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 /**
  * Mobile-specific dependency container. Holds mobile platform use-cases, repositories,
@@ -33,13 +38,20 @@ class AppContainer(
         createHttpClient { configureBeFair(tokenStorage) }
     }
 
+    // On-device Room cache; the server stays the source of truth.
+    val database: BeFairDatabase by lazy { createBeFairDatabase() }
+
     val authRepository: AuthRepository by lazy {
-        AuthRepositoryImpl(authHttpClient, tokenStorage, userProfileStorage)
+        AuthRepositoryImpl(authHttpClient, tokenStorage, userProfileStorage, database.itemDao())
     }
 
     val profileRepository: ProfileRepository by lazy {
         ProfileRepositoryImpl(coreContainer.httpClient)
     }
 
-    val itemRepository: ItemRepository by lazy { ItemRepositoryImpl(authHttpClient) }
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    val itemRepository: ItemRepository by lazy {
+        ItemRepositoryImpl(authHttpClient, database.itemDao(), appScope)
+    }
 }

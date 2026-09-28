@@ -21,8 +21,8 @@ interface AuthRepository {
     /** Calls the protected profile endpoint (proves Bearer injection). */
     suspend fun fetchProfile(): AppResult<ProfileResponse>
 
-    /** Clears persisted tokens and profile data. */
-    fun logout()
+    /** Clears persisted tokens, profile data and the on-device item cache. */
+    suspend fun logout()
 
     /** Whether a token pair is currently stored. */
     fun isLoggedIn(): Boolean
