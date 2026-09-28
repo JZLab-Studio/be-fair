@@ -6,6 +6,12 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.androidxRoom)
+}
+
+room {
+    schemaDirectory(layout.projectDirectory.dir("schemas"))
 }
 
 compose.resources {
@@ -59,6 +65,8 @@ kotlin {
             implementation(libs.ktor.client.contentNegotiation)
             implementation(libs.ktor.client.auth)
             implementation(libs.ktor.serializationKotlinxJson)
+            implementation(libs.androidx.room.runtime)
+            implementation(libs.androidx.sqlite.bundled)
             implementation(projects.core)
         }
 
@@ -71,4 +79,11 @@ kotlin {
             implementation(libs.kotlin.test)
         }
     }
+}
+
+dependencies {
+    add("kspAndroid", libs.androidx.room.compiler)
+    add("kspIosX64", libs.androidx.room.compiler)
+    add("kspIosArm64", libs.androidx.room.compiler)
+    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
 }

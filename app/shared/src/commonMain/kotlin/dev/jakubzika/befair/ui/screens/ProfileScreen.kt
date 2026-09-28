@@ -12,6 +12,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +23,7 @@ import dev.jakubzika.befair.ui.atoms.PrimaryButton
 import be_fair.app.shared.generated.resources.Res
 import be_fair.app.shared.generated.resources.screen_profile_sign_out
 import be_fair.app.shared.generated.resources.screen_profile_title
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -33,6 +35,7 @@ fun ProfileScreen(
     onSignOut: () -> Unit,
 ) {
     val authRepository = LocalAppContainer.current.authRepository
+    val scope = rememberCoroutineScope()
 
     var email by remember { mutableStateOf<String?>(null) }
 
@@ -60,8 +63,10 @@ fun ProfileScreen(
             PrimaryButton(
                 title = stringResource(Res.string.screen_profile_sign_out),
                 onClick = {
-                    authRepository.logout()
-                    onSignOut()
+                    scope.launch {
+                        authRepository.logout()
+                        onSignOut()
+                    }
                 },
             )
         }

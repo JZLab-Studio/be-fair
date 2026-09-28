@@ -2,6 +2,7 @@ package dev.jakubzika.befair.domain.repository
 
 import dev.jakubzika.befair.domain.AppResult
 import dev.jakubzika.befair.domain.model.CreateItemRequest
+import dev.jakubzika.befair.domain.model.ItemEventType
 import dev.jakubzika.befair.domain.model.ItemResponse
 import kotlinx.coroutines.flow.StateFlow
 
@@ -16,4 +17,7 @@ interface ItemRepository {
     suspend fun refresh(): AppResult<Unit>
 
     suspend fun addItem(request: CreateItemRequest): AppResult<ItemResponse>
+
+    /** Logs a [type] event for today against [itemId] (the Items list "+1") and refreshes its stats in [items]. */
+    suspend fun quickLog(itemId: String, type: ItemEventType): AppResult<ItemResponse>
 }

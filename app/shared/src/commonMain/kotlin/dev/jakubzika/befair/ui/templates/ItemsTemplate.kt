@@ -15,8 +15,11 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,7 +28,6 @@ import be_fair.app.shared.generated.resources.Res
 import be_fair.app.shared.generated.resources.screen_items_add_item
 import be_fair.app.shared.generated.resources.screen_items_empty_hint_clothes
 import be_fair.app.shared.generated.resources.screen_items_empty_hint_tools
-import be_fair.app.shared.generated.resources.screen_items_load_error
 import be_fair.app.shared.generated.resources.screen_items_tab_clothes
 import be_fair.app.shared.generated.resources.screen_items_tab_tools
 import be_fair.app.shared.generated.resources.screen_items_title
@@ -47,8 +49,8 @@ enum class ItemsTab {
 }
 
 // Items screen: fixed header with the "+" action, the Clothes/Tools segmented
-// control, a hairline divider, then the item list for the selected tab. With no
-// items the hint explaining +1 logging takes the list's place.
+// control, a hairline divider, a hint line explaining +1 logging, then the item
+// list for the selected tab. Failures surface as a snackbar.
 @Composable
 fun ItemsTemplate(
     selectedTab: ItemsTab,
@@ -57,10 +59,13 @@ fun ItemsTemplate(
     items: List<ItemResponse>,
     onItemClick: (String) -> Unit,
     modifier: Modifier = Modifier,
-    errorMessage: String? = null
+    onQuickLog: (ItemResponse) -> Unit = {},
+    flashingItemId: String? = null,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
+    Box(modifier = modifier.fillMaxSize()) {
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
@@ -103,43 +108,38 @@ fun ItemsTemplate(
             color = MaterialTheme.colorScheme.outlineVariant
         )
 
-        if (errorMessage != null) {
-            Text(
-                text = stringResource(Res.string.screen_items_load_error, errorMessage),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(BeFairDimension.Spacing.md)
-            )
-        }
+        // One quiet line explaining +1 vs. open, shown whether or not the list is empty.
+        Text(
+            text = when (selectedTab) {
+                ItemsTab.CLOTHES -> stringResource(Res.string.screen_items_empty_hint_clothes)
+                ItemsTab.TOOLS -> stringResource(Res.string.screen_items_empty_hint_tools)
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = LocalBeFairExtendedColors.current.ink3,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(BeFairDimension.Spacing.md)
+        )
 
-        if (items.isEmpty()) {
-            Text(
-                text = when (selectedTab) {
-                    ItemsTab.CLOTHES -> stringResource(Res.string.screen_items_empty_hint_clothes)
-                    ItemsTab.TOOLS -> stringResource(Res.string.screen_items_empty_hint_tools)
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = LocalBeFairExtendedColors.current.ink3,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(BeFairDimension.Spacing.md)
-            )
-        } else {
+        if (items.isNotEmpty()) {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(items, key = { it.id }) { item ->
                     ItemRow(
                         item = item,
                         stats = item.stats,
-                        flashing = false,
+                        flashing = item.id == flashingItemId,
                         onOpen = { onItemClick(item.id) },
-                        // TODO: wire to POST /api/items/{id}/events once event logging lands.
-                        onQuickLog = {}
+                        onQuickLog = { onQuickLog(item) }
                     )
                 }
             }
         }
+    }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }
 
