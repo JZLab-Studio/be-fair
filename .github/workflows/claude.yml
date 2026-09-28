@@ -46,4 +46,4 @@ jobs:
           # Allow Claude to fetch attachment URLs (e.g. SVG icons attached to issues).
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
-          claude_args: '--allowedTools "WebFetch(domain:github.com),WebFetch(domain:user-images.githubusercontent.com),WebFetch(domain:private-user-images.githubusercontent.com),WebFetch(domain:objects.githubusercontent.com),Bash(gh pr *),Bash(./gradlew *)"'
+          claude_args: '--allowedTools "WebFetch(domain:github.com),WebFetch(domain:user-images.githubusercontent.com),WebFetch(domain:private-user-images.githubusercontent.com),WebFetch(domain:objects.githubusercontent.com),Bash(gh pr *),Bash(./gradlew *),Bash(git checkout:*),Bash(git switch:*)"'
