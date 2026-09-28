@@ -42,7 +42,10 @@ class AppContainer(
     val database: BeFairDatabase by lazy { createBeFairDatabase() }
 
     val authRepository: AuthRepository by lazy {
-        AuthRepositoryImpl(authHttpClient, tokenStorage, userProfileStorage, database.itemDao())
+        AuthRepositoryImpl(authHttpClient, tokenStorage, userProfileStorage, database.itemDao()) {
+            // Prefetch items once the user is signed in; failures fall back to the cached list.
+            itemRepository.refresh()
+        }
     }
 
     val profileRepository: ProfileRepository by lazy {

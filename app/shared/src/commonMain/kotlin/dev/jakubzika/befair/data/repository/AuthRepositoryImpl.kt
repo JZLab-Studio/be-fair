@@ -26,6 +26,8 @@ class AuthRepositoryImpl(
     private val tokenStorage: TokenStorage,
     private val userProfileStorage: UserProfileStorage,
     private val itemDao: ItemDao,
+    // Best-effort hook run after a successful sign-in (e.g. to prefetch items); its outcome never fails login.
+    private val onSignedIn: suspend () -> Unit = {},
 ): AuthRepository {
 
     override suspend fun register(name: String, email: String, password: String): AppResult<Unit> = safeCall {
@@ -45,6 +47,7 @@ class AuthRepositoryImpl(
         // Fetch and cache the user profile after successful verification
         val profile = fetchProfileInternal()
         userProfileStorage.saveProfile(profile.displayName, profile.email)
+        onSignedIn()
     }
 
     override suspend fun login(email: String, password: String): AppResult<Unit> = safeCall {
@@ -55,6 +58,7 @@ class AuthRepositoryImpl(
         tokenStorage.saveTokens(tokens.accessToken, tokens.refreshToken)
         val profile = fetchProfileInternal()
         userProfileStorage.saveProfile(profile.displayName, profile.email)
+        onSignedIn()
     }
 
     override suspend fun fetchProfile(): AppResult<ProfileResponse> = safeCall {
