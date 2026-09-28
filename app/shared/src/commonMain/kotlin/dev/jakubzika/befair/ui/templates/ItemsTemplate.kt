@@ -57,6 +57,8 @@ fun ItemsTemplate(
     items: List<ItemResponse>,
     onItemClick: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onQuickLog: (ItemResponse) -> Unit = {},
+    flashingItemId: String? = null,
     errorMessage: String? = null
 ) {
     Column(
@@ -132,10 +134,9 @@ fun ItemsTemplate(
                     ItemRow(
                         item = item,
                         stats = item.stats,
-                        flashing = false,
+                        flashing = item.id == flashingItemId,
                         onOpen = { onItemClick(item.id) },
-                        // TODO: wire to POST /api/items/{id}/events once event logging lands.
-                        onQuickLog = {}
+                        onQuickLog = { onQuickLog(item) }
                     )
                 }
             }

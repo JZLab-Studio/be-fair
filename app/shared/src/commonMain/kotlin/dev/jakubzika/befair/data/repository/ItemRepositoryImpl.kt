@@ -4,9 +4,13 @@ import dev.jakubzika.befair.data.network.API_BASE_URL
 import dev.jakubzika.befair.data.network.safeCall
 import dev.jakubzika.befair.domain.AppResult
 import dev.jakubzika.befair.domain.model.CreateItemRequest
+import dev.jakubzika.befair.domain.model.EventLoggedResponse
+import dev.jakubzika.befair.domain.model.ItemEventType
 import dev.jakubzika.befair.domain.model.ItemListResponse
 import dev.jakubzika.befair.domain.model.ItemResponse
+import dev.jakubzika.befair.domain.model.LogEventRequest
 import dev.jakubzika.befair.domain.repository.ItemRepository
+import dev.jakubzika.befair.util.newItemId
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -44,5 +48,15 @@ class ItemRepositoryImpl(private val client: HttpClient) : ItemRepository {
         // Merge by id: a retried request replays the stored row rather than creating a duplicate.
         _items.value = _items.value.filterNot { it.id == created.id } + created
         created
+    }
+
+    override suspend fun quickLog(itemId: String, type: ItemEventType): AppResult<ItemResponse> = safeCall {
+        val logged: EventLoggedResponse = client.post("$API_BASE_URL/api/items/$itemId/events") {
+            contentType(ContentType.Application.Json)
+            setBody(LogEventRequest(id = newItemId(), type = type))
+        }.body()
+        // Replace the row with the server's refreshed stats rather than recomputing them locally.
+        _items.value = _items.value.map { if (it.id == logged.item.id) logged.item else it }
+        logged.item
     }
 }
