@@ -61,6 +61,55 @@ Conventions when using Exposed:
 - Create/migrate schema in `module()` via `transaction { SchemaUtils.create(MyTable) }`.
 - Wrap all DB access in `transaction { … }` blocks.
 
+### Database Schema
+
+```mermaid
+erDiagram
+    USERS {
+        int id PK
+        string email UK
+        string password_hash
+        string display_name
+        boolean is_verified
+        string otp_code
+        long otp_expires_at
+    }
+    ITEMS {
+        string id PK "UUID"
+        int user_id FK
+        string kind
+        string name
+        string category
+        long price_cents
+        string currency "default: EUR"
+        long purchased_on
+        long archived_at
+        long deleted_at
+        long created_at
+        long updated_at
+    }
+    ITEM_EVENTS {
+        string id PK "UUID"
+        string item_id FK
+        string type
+        long occurred_at
+        long cost_cents
+        string note
+        long created_at
+        long deleted_at
+    }
+    USERS ||--o{ ITEMS : "user_id (CASCADE)"
+    ITEMS ||--o{ ITEM_EVENTS : "item_id (CASCADE)"
+```
+
+**Key Design Notes:**
+
+- **users.id** auto-increments; used as FK in items and (indirectly) item_events.
+- **items.id** is a client-generated UUID string (36 chars) to prevent duplicates on retried creates after flaky networks. All FKs from item_events cascade on delete.
+- **item_events** uses a single table with a `type` discriminator (wear/wash/use/repair/etc.) to calculate cost-per-use and cost-per-month without per-kind counter columns on items.
+- **Soft deletes:** items and item_events have `deleted_at` columns; queries should filter `WHERE deleted_at IS NULL` when appropriate.
+- **Indices:** `items(user_id)` enables fast per-user queries; `item_events(item_id, occurred_at)` enables efficient cost calculations and event history lookups.
+
 ## Testing
 
 Use `testApplication { … }` from `ktor-server-test-host`.
