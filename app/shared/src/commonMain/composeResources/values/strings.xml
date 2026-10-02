@@ -38,6 +38,14 @@
     <!-- Overview screen -->
     <string name="screen_overview_title">Overview</string>
 
+    <string name="screen_overview_invested_label">Total invested</string>
+    <string name="screen_overview_avg_per_wear_label">Avg per wear</string>
+    <string name="screen_overview_tools_per_month_label">Tools per month</string>
+    <string name="screen_overview_attention">%1$s is your highest cost per wear at %2$s. Wear it more to bring it down.</string>
+    <string name="screen_overview_recent_activity">Recent activity</string>
+    <string name="screen_overview_all_items">All items</string>
+    <string name="screen_overview_activity_meta">%1$s · %2$s</string>
+
     <!-- Overview screen — empty state -->
     <string name="screen_overview_empty_welcome">Welcome, %1$s.</string>
     <string name="screen_overview_empty_welcome_no_name">Welcome!</string>
