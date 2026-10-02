@@ -133,6 +133,14 @@
     <string name="screen_add_new_item_submitting">Adding…</string>
 
     <!-- Profile screen -->
-    <string name="screen_profile_title">Profile Screen</string>
-    <string name="screen_profile_sign_out">Sign Out</string>
+    <string name="screen_profile_title">Profile</string>
+    <string name="screen_profile_preferences">Preferences</string>
+    <string name="screen_profile_pref_currency">Currency</string>
+    <string name="screen_profile_pref_currency_value">EUR (€)</string>
+    <string name="screen_profile_pref_cost_basis">Tool cost basis</string>
+    <string name="screen_profile_pref_cost_basis_value">Months owned</string>
+    <string name="screen_profile_pref_data">Data</string>
+    <string name="screen_profile_pref_data_value">Stored on this device</string>
+    <string name="screen_profile_account">Account</string>
+    <string name="screen_profile_sign_out">Sign out</string>
 </resources>
