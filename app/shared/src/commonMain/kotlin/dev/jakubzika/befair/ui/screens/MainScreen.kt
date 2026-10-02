@@ -74,7 +74,9 @@ fun MainScreen(
             entryProvider = entryProvider {
                 entry<Overview> {
                     OverviewScreen(
-                        onNavToAddNewItemScreen = { (overviewBackStack as NavBackStack<Route>).add(AddNewItem) }
+                        onNavToAddNewItemScreen = { (overviewBackStack as NavBackStack<Route>).add(AddNewItem) },
+                        onNavToItemDetailScreen = { id -> (overviewBackStack as NavBackStack<Route>).add(ItemDetail(id)) },
+                        onNavToItemsScreen = { currentTab.value = Items }
                     )
                 }
                 entry<Items> {
