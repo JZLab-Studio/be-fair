@@ -39,11 +39,12 @@ import be_fair.app.shared.generated.resources.item_row_stat_placeholder
 import dev.jakubzika.befair.domain.model.ItemKind
 import dev.jakubzika.befair.domain.model.ItemResponse
 import dev.jakubzika.befair.domain.model.ItemStats
-import kotlinx.datetime.LocalDate
 import dev.jakubzika.befair.ui.atoms.BeFairDimension
 import dev.jakubzika.befair.ui.atoms.BeFairTheme
 import dev.jakubzika.befair.ui.atoms.LocalBeFairExtendedColors
 import dev.jakubzika.befair.ui.atoms.QuickAddButton
+import dev.jakubzika.befair.util.formatEuroCents
+import dev.jakubzika.befair.util.formatMonthYear
 import org.jetbrains.compose.resources.stringResource
 
 private val RowMinHeight = 56.dp
@@ -180,27 +181,6 @@ private fun itemMetaText(item: ItemResponse, stats: ItemStats?): String = when (
 private fun ItemStats.primaryValueCents(kind: ItemKind): Long? = when (kind) {
     ItemKind.CLOTHING -> costPerUseCents
     ItemKind.TOOL -> costPerMonthCents
-}
-
-// Fixed "€cents/100" formatting — currency is EUR-only for now (see ItemModels.kt),
-// so a locale-aware NumberFormat isn't needed and isn't available in commonMain.
-private fun formatEuroCents(cents: Long): String {
-    val sign = if (cents < 0) "-" else ""
-    val absCents = if (cents < 0) -cents else cents
-    val whole = absCents / 100
-    val fraction = (absCents % 100).toString().padStart(2, '0')
-    return "$sign€$whole.$fraction"
-}
-
-// Renders an epoch-day (see ItemModels.kt) as "MMM yyyy". Abbreviations are fixed
-// rather than locale-aware: kotlinx-datetime has no month-name formatting.
-private val monthAbbreviations = listOf(
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-)
-
-private fun formatMonthYear(epochDay: Long): String {
-    val date = LocalDate.fromEpochDays(epochDay)
-    return "${monthAbbreviations[date.month.ordinal]} ${date.year}"
 }
 
 @Preview(backgroundColor = 0xFFFFFF, showBackground = true)
