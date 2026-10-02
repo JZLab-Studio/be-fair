@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Brand -->
-    <string name="brand_mark">B=</string>
-    <string name="brand_wordmark">BeFair</string>
+    <string name="brand_wordmark">BEFAIR</string>
 
     <!-- Auth template -->
     <string name="auth_title_sign_in">Sign in</string>
