@@ -31,6 +31,8 @@ import be_fair.app.shared.generated.resources.screen_overview_empty_step_3_title
 import be_fair.app.shared.generated.resources.screen_overview_empty_welcome
 import be_fair.app.shared.generated.resources.screen_overview_empty_welcome_no_name
 import be_fair.app.shared.generated.resources.screen_overview_title
+import dev.jakubzika.befair.ui.LocalAppSettings
+import dev.jakubzika.befair.ui.per
 import dev.jakubzika.befair.ui.atoms.BeFairDimension
 import dev.jakubzika.befair.ui.atoms.BeFairTheme
 import dev.jakubzika.befair.ui.atoms.LocalBeFairExtendedColors
@@ -101,7 +103,10 @@ fun OverviewEmptyTemplate(
                     ),
                     HowItWorksStep(
                         title = stringResource(Res.string.screen_overview_empty_step_3_title),
-                        description = stringResource(Res.string.screen_overview_empty_step_3_description)
+                        description = stringResource(
+                            Res.string.screen_overview_empty_step_3_description,
+                            LocalAppSettings.current.toolBasis.per()
+                        )
                     )
                 )
             )

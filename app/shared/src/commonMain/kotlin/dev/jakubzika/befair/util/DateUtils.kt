@@ -1,5 +1,6 @@
 package dev.jakubzika.befair.util
 
+import dev.jakubzika.befair.domain.model.ToolBasis
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlinx.datetime.LocalDate
@@ -24,9 +25,26 @@ fun currentTimeMillis(): Long = Clock.System.now().toEpochMilliseconds()
 fun isoToEpochDay(iso: String): Long? =
     runCatching { LocalDate.parse(iso).toEpochDays() }.getOrNull()
 
-/** Whole calendar months from [purchasedOn] (epoch day) until today, never negative. */
 @OptIn(ExperimentalTime::class)
-fun monthsOwned(purchasedOn: Long): Int =
-    LocalDate.fromEpochDays(purchasedOn).monthsUntil(Clock.System.todayIn(TimeZone.currentSystemDefault())).coerceAtLeast(0)
+fun todayEpochDay(): Long = Clock.System.todayIn(TimeZone.currentSystemDefault()).toEpochDays()
+
+/** Whole calendar months from [purchasedOn] (epoch day) until [todayEpochDay], never negative. */
+fun monthsOwned(purchasedOn: Long, todayEpochDay: Long = todayEpochDay()): Int =
+    LocalDate.fromEpochDays(purchasedOn).monthsUntil(LocalDate.fromEpochDays(todayEpochDay)).coerceAtLeast(0)
+
+/**
+ * Full [basis] periods owned since [purchasedOn], minimum 1: whole days, whole days ÷ 7,
+ * [monthsOwned], or [monthsOwned] ÷ 12.
+ */
+fun periodsOwned(purchasedOn: Long, basis: ToolBasis, todayEpochDay: Long = todayEpochDay()): Int {
+    val days = (todayEpochDay - purchasedOn).toInt().coerceAtLeast(0)
+    val periods = when (basis) {
+        ToolBasis.DAY -> days
+        ToolBasis.WEEK -> days / 7
+        ToolBasis.MONTH -> monthsOwned(purchasedOn, todayEpochDay)
+        ToolBasis.YEAR -> monthsOwned(purchasedOn, todayEpochDay) / 12
+    }
+    return periods.coerceAtLeast(1)
+}
 
 fun epochDayToIso(epochDay: Long): String = LocalDate.fromEpochDays(epochDay).toString()

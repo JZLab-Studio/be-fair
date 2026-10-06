@@ -53,9 +53,8 @@ import be_fair.app.shared.generated.resources.screen_item_detail_remove_confirm
 import be_fair.app.shared.generated.resources.screen_item_detail_remove_confirm_prompt
 import be_fair.app.shared.generated.resources.screen_item_detail_remove_item
 import be_fair.app.shared.generated.resources.screen_item_detail_remove_keep
-import be_fair.app.shared.generated.resources.screen_item_detail_stat_months_owned
 import be_fair.app.shared.generated.resources.screen_item_detail_stat_paid
-import be_fair.app.shared.generated.resources.screen_item_detail_stat_per_month
+import be_fair.app.shared.generated.resources.screen_item_detail_stat_periods_owned
 import be_fair.app.shared.generated.resources.screen_item_detail_stat_per_wash
 import be_fair.app.shared.generated.resources.screen_item_detail_stat_per_wear
 import be_fair.app.shared.generated.resources.screen_item_detail_stat_uses
@@ -67,6 +66,10 @@ import dev.jakubzika.befair.domain.model.ItemEventType
 import dev.jakubzika.befair.domain.model.ItemKind
 import dev.jakubzika.befair.domain.model.ItemResponse
 import dev.jakubzika.befair.domain.model.ItemStats
+import dev.jakubzika.befair.domain.model.primaryCostCents
+import dev.jakubzika.befair.ui.LocalAppSettings
+import dev.jakubzika.befair.ui.per
+import dev.jakubzika.befair.ui.unit
 import dev.jakubzika.befair.ui.atoms.BeFairDimension
 import dev.jakubzika.befair.ui.atoms.BeFairTheme
 import dev.jakubzika.befair.ui.atoms.DestructiveButton
@@ -75,8 +78,9 @@ import dev.jakubzika.befair.ui.atoms.PrimaryButton
 import dev.jakubzika.befair.ui.atoms.SecondaryButton
 import dev.jakubzika.befair.util.formatDate
 import dev.jakubzika.befair.util.formatDateFromMillis
-import dev.jakubzika.befair.util.formatEuroCents
-import dev.jakubzika.befair.util.formatEuroWhole
+import dev.jakubzika.befair.util.formatMoneyCents
+import dev.jakubzika.befair.util.formatMoneyWhole
+import dev.jakubzika.befair.util.todayEpochDay
 import org.jetbrains.compose.resources.stringResource
 
 private val HeaderHeight = 56.dp
@@ -94,7 +98,7 @@ const val ItemDetailHistoryLimit = 8
 fun ItemDetailTemplate(
     item: ItemResponse,
     history: List<ItemEventResponse>,
-    monthsOwned: Int,
+    periodsOwned: Int,
     confirmingRemove: Boolean,
     onBack: () -> Unit,
     onLog: (ItemEventType) -> Unit,
@@ -123,7 +127,7 @@ fun ItemDetailTemplate(
                     .padding(BeFairDimension.Spacing.md),
                 verticalArrangement = Arrangement.spacedBy(BeFairDimension.Spacing.md)
             ) {
-                StatsCard(item = item, monthsOwned = monthsOwned)
+                StatsCard(item = item, periodsOwned = periodsOwned)
                 FactsBlock(item = item)
 
                 PrimaryButton(
@@ -193,14 +197,17 @@ private fun Header(title: String, onBack: () -> Unit) {
 }
 
 @Composable
-private fun StatsCard(item: ItemResponse, monthsOwned: Int) {
+private fun StatsCard(item: ItemResponse, periodsOwned: Int) {
+    val settings = LocalAppSettings.current
     val stats = item.stats
     val placeholder = stringResource(Res.string.item_row_stat_placeholder)
     val isClothing = item.kind == ItemKind.CLOTHING
-    val heroCents = if (isClothing) stats?.costPerUseCents else stats?.costPerMonthCents
-    val heroLabel = stringResource(
-        if (isClothing) Res.string.screen_item_detail_stat_per_wear else Res.string.screen_item_detail_stat_per_month
-    )
+    val heroCents = item.primaryCostCents(settings.toolBasis, todayEpochDay())
+    val heroLabel = if (isClothing) {
+        stringResource(Res.string.screen_item_detail_stat_per_wear)
+    } else {
+        settings.toolBasis.per()
+    }
 
     Column(
         modifier = Modifier
@@ -212,7 +219,7 @@ private fun StatsCard(item: ItemResponse, monthsOwned: Int) {
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(BeFairDimension.Spacing.xs)) {
             Text(
-                text = heroCents?.let(::formatEuroCents) ?: placeholder,
+                text = heroCents?.let { formatMoneyCents(it, settings) } ?: placeholder,
                 style = MaterialTheme.typography.displayLarge,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -228,7 +235,7 @@ private fun StatsCard(item: ItemResponse, monthsOwned: Int) {
                 val totalCents = item.priceCents + (stats?.maintenanceCents ?: 0)
                 val washes = stats?.washCount ?: 0
                 Stat(
-                    value = if (washes > 0) formatEuroCents(totalCents / washes) else placeholder,
+                    value = if (washes > 0) formatMoneyCents(totalCents / washes, settings) else placeholder,
                     label = stringResource(Res.string.screen_item_detail_stat_per_wash),
                     modifier = Modifier.weight(1f)
                 )
@@ -244,8 +251,11 @@ private fun StatsCard(item: ItemResponse, monthsOwned: Int) {
                 )
             } else {
                 Stat(
-                    value = monthsOwned.toString(),
-                    label = stringResource(Res.string.screen_item_detail_stat_months_owned),
+                    value = periodsOwned.toString(),
+                    label = stringResource(
+                        Res.string.screen_item_detail_stat_periods_owned,
+                        settings.toolBasis.unit(periodsOwned)
+                    ),
                     modifier = Modifier.weight(1f)
                 )
                 Stat(
@@ -254,7 +264,7 @@ private fun StatsCard(item: ItemResponse, monthsOwned: Int) {
                     modifier = Modifier.weight(1f)
                 )
                 Stat(
-                    value = formatEuroWhole(item.priceCents),
+                    value = formatMoneyWhole(item.priceCents, settings),
                     label = stringResource(Res.string.screen_item_detail_stat_paid),
                     modifier = Modifier.weight(1f)
                 )
@@ -287,7 +297,7 @@ private fun FactsBlock(item: ItemResponse) {
             .background(MaterialTheme.colorScheme.surface, CardShape)
             .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), CardShape)
     ) {
-        Fact(stringResource(Res.string.screen_item_detail_fact_paid), formatEuroCents(item.priceCents))
+        Fact(stringResource(Res.string.screen_item_detail_fact_paid), formatMoneyCents(item.priceCents, LocalAppSettings.current))
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Fact(stringResource(Res.string.screen_item_detail_fact_purchased), formatDate(item.purchasedOn))
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -451,7 +461,7 @@ private fun ItemDetailTemplateClothingPreview() {
                 ItemEventResponse("e1", previewClothing.id, ItemEventType.WEAR, 1_700_000_000_000, null, null, 0),
                 ItemEventResponse("e2", previewClothing.id, ItemEventType.WASH, 1_699_000_000_000, null, null, 0)
             ),
-            monthsOwned = 0,
+            periodsOwned = 1,
             confirmingRemove = false,
             onBack = {},
             onLog = {},
@@ -475,7 +485,7 @@ private fun ItemDetailTemplateToolConfirmPreview() {
                 stats = previewClothing.stats?.copy(useCount = 12, costPerMonthCents = 850)
             ),
             history = emptyList(),
-            monthsOwned = 14,
+            periodsOwned = 14,
             confirmingRemove = true,
             onBack = {},
             onLog = {},

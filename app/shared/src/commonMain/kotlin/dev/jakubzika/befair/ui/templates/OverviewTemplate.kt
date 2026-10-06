@@ -30,13 +30,14 @@ import be_fair.app.shared.generated.resources.screen_overview_title
 import dev.jakubzika.befair.domain.model.ActivityEntry
 import dev.jakubzika.befair.domain.model.ItemResponse
 import dev.jakubzika.befair.domain.model.OverviewSummary
+import dev.jakubzika.befair.ui.LocalAppSettings
 import dev.jakubzika.befair.ui.atoms.BeFairDimension
 import dev.jakubzika.befair.ui.atoms.BeFairTheme
 import dev.jakubzika.befair.ui.atoms.LinkButton
 import dev.jakubzika.befair.ui.organisms.ActivityRow
 import dev.jakubzika.befair.ui.organisms.AttentionNotice
 import dev.jakubzika.befair.ui.organisms.OverviewStatsCard
-import dev.jakubzika.befair.util.formatEuroCents
+import dev.jakubzika.befair.util.formatMoneyCents
 import org.jetbrains.compose.resources.stringResource
 
 private val HeaderHeight = 56.dp
@@ -83,7 +84,7 @@ fun OverviewTemplate(
                     text = stringResource(
                         Res.string.screen_overview_attention,
                         item.name,
-                        formatEuroCents(item.stats?.costPerUseCents ?: 0L)
+                        formatMoneyCents(item.stats?.costPerUseCents ?: 0L, LocalAppSettings.current)
                     ),
                     onClick = { onOpenItem(item.id) }
                 )
@@ -132,7 +133,7 @@ private fun OverviewTemplatePreview() {
             summary = OverviewSummary(
                 investedCents = 128000,
                 avgCostPerWearCents = 609,
-                toolsPerMonthCents = 1850,
+                toolsCostCents = 1850,
                 attention = null
             ),
             recent = emptyList(),

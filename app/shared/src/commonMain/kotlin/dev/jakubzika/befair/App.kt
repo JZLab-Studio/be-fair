@@ -3,6 +3,8 @@ package dev.jakubzika.befair
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -14,6 +16,7 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
 import dev.jakubzika.befair.di.AppContainer
 import dev.jakubzika.befair.ui.LocalAppContainer
+import dev.jakubzika.befair.ui.LocalAppSettings
 import dev.jakubzika.befair.ui.atoms.BeFairTheme
 import dev.jakubzika.befair.ui.navigation.AddNewItem
 import dev.jakubzika.befair.ui.navigation.ItemDetail
@@ -23,6 +26,7 @@ import dev.jakubzika.befair.ui.navigation.OtpVerification
 import dev.jakubzika.befair.ui.navigation.Overview
 import dev.jakubzika.befair.ui.navigation.Profile
 import dev.jakubzika.befair.ui.navigation.Route
+import dev.jakubzika.befair.ui.navigation.Settings
 import dev.jakubzika.befair.ui.navigation.SignIn
 import dev.jakubzika.befair.ui.screens.AuthScreen
 import dev.jakubzika.befair.ui.screens.MainScreen
@@ -36,7 +40,12 @@ import kotlinx.serialization.serializer
 fun App() {
     // DI container initialization
     val appContainer = remember { AppContainer() }
-    CompositionLocalProvider(LocalAppContainer provides appContainer) {
+    // Collected once per app render so every screen formats with the same live settings.
+    val settings by appContainer.settingsRepository.settings.collectAsState()
+    CompositionLocalProvider(
+        LocalAppContainer provides appContainer,
+        LocalAppSettings provides settings
+    ) {
         // General app theme
         BeFairTheme {
             val config = remember {
@@ -52,6 +61,7 @@ fun App() {
                             subclass(Profile::class, serializer())
                             subclass(ItemDetail::class, serializer())
                             subclass(AddNewItem::class, serializer())
+                            subclass(Settings::class, serializer())
                         }
                     }
                 }
