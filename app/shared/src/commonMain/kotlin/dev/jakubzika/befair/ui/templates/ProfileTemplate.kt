@@ -3,6 +3,7 @@ package dev.jakubzika.befair.ui.templates
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,24 +17,23 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import be_fair.app.shared.generated.resources.Res
 import be_fair.app.shared.generated.resources.screen_profile_account
-import be_fair.app.shared.generated.resources.screen_profile_pref_cost_basis
-import be_fair.app.shared.generated.resources.screen_profile_pref_cost_basis_value
-import be_fair.app.shared.generated.resources.screen_profile_pref_currency
-import be_fair.app.shared.generated.resources.screen_profile_pref_currency_value
-import be_fair.app.shared.generated.resources.screen_profile_pref_data
-import be_fair.app.shared.generated.resources.screen_profile_pref_data_value
 import be_fair.app.shared.generated.resources.screen_profile_preferences
+import be_fair.app.shared.generated.resources.screen_profile_settings
 import be_fair.app.shared.generated.resources.screen_profile_sign_out
 import be_fair.app.shared.generated.resources.screen_profile_title
 import dev.jakubzika.befair.ui.atoms.BeFairDimension
@@ -42,7 +42,8 @@ import dev.jakubzika.befair.ui.atoms.DestructiveButton
 import org.jetbrains.compose.resources.stringResource
 
 private val HeaderHeight = 56.dp
-private val HitTarget = 44.dp
+private val RowHeight = 56.dp
+private val ChevronSize = 20.dp
 private val AvatarSize = 56.dp
 private val CardShape = RoundedCornerShape(BeFairDimension.Radius.small)
 
@@ -56,12 +57,14 @@ internal fun initialsOf(name: String): String =
         .take(MaxInitials)
         .uppercase()
 
-// Profile: fixed header (no back), then a scrolling column — profile card, read-only
-// preferences facts, and the account section. Orange is the sign-out button only.
+// Profile: fixed header (no back), then a scrolling column — profile card, a Settings row
+// summarising the live preferences, and the account section. Orange is the sign-out button only.
 @Composable
 fun ProfileTemplate(
     name: String,
     email: String,
+    settingsSummary: String,
+    onOpenSettings: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -94,27 +97,7 @@ fun ProfileTemplate(
             ProfileCard(name = name, email = email)
 
             Section(title = stringResource(Res.string.screen_profile_preferences)) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surface, CardShape)
-                        .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), CardShape)
-                ) {
-                    Fact(
-                        stringResource(Res.string.screen_profile_pref_currency),
-                        stringResource(Res.string.screen_profile_pref_currency_value)
-                    )
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                    Fact(
-                        stringResource(Res.string.screen_profile_pref_cost_basis),
-                        stringResource(Res.string.screen_profile_pref_cost_basis_value)
-                    )
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                    Fact(
-                        stringResource(Res.string.screen_profile_pref_data),
-                        stringResource(Res.string.screen_profile_pref_data_value)
-                    )
-                }
+                SettingsRow(summary = settingsSummary, onClick = onOpenSettings)
             }
 
             Section(title = stringResource(Res.string.screen_profile_account)) {
@@ -185,27 +168,38 @@ private fun Section(title: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun Fact(label: String, value: String) {
+private fun SettingsRow(summary: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = HitTarget)
+            .background(MaterialTheme.colorScheme.surface, CardShape)
+            .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), CardShape)
+            .clip(CardShape)
+            .clickable(role = Role.Button, onClick = onClick)
+            .heightIn(min = RowHeight)
             .padding(horizontal = BeFairDimension.Spacing.md, vertical = BeFairDimension.Spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.spacedBy(BeFairDimension.Spacing.md)
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(start = BeFairDimension.Spacing.md)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(Res.string.screen_profile_settings),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.outline,
+            modifier = Modifier.size(ChevronSize)
         )
     }
 }
@@ -214,7 +208,13 @@ private fun Fact(label: String, value: String) {
 @Composable
 private fun ProfileTemplatePreview() {
     BeFairTheme {
-        ProfileTemplate(name = "Jakub Zika", email = "jakub@example.com", onSignOut = {})
+        ProfileTemplate(
+            name = "Jakub Zika",
+            email = "jakub@example.com",
+            settingsSummary = "Euro (€) · tools per month",
+            onOpenSettings = {},
+            onSignOut = {}
+        )
     }
 }
 
@@ -225,6 +225,8 @@ private fun ProfileTemplateLongNamePreview() {
         ProfileTemplate(
             name = "Maximilian Alexander Von Hohenzollern-Sigmaringen",
             email = "maximilian.alexander.hohenzollern@example-long-domain.com",
+            settingsSummary = "Custom (CHF) · tools per year",
+            onOpenSettings = {},
             onSignOut = {}
         )
     }
