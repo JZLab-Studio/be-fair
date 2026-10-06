@@ -23,6 +23,22 @@
     <string name="auth_toggle_has_account">Already have an account?</string>
     <string name="auth_toggle_create_one">Create one</string>
     <string name="auth_divider_or">or</string>
+    <string name="auth_forgot_password">Forgot password?</string>
+    <string name="auth_title_reset_password">Reset password</string>
+    <string name="auth_subtitle_reset_password">Enter the email you use for BeFair. We\'ll send a link to set a new password.</string>
+    <string name="auth_send_reset_link">Send reset link</string>
+    <string name="auth_sending">Sending…</string>
+    <string name="auth_error_reset_network">Couldn\'t send the email. Check your connection and try again.</string>
+    <string name="auth_toggle_remembered">Remembered it?</string>
+    <string name="auth_title_check_email">Check your email</string>
+    <string name="auth_sent_body">If an account exists for %1$s, a reset link is on its way. It expires in 1 hour.</string>
+    <string name="auth_back_to_sign_in">Back to sign in</string>
+    <string name="auth_resend_cooldown">No email? Resend in %1$ss</string>
+    <string name="auth_resend_cooldown_again">Sent again. Resend in %1$ss</string>
+    <string name="auth_resend_prompt">No email? Check spam, or</string>
+    <string name="auth_resend_link">resend link</string>
+    <string name="auth_toggle_wrong_address">Wrong address?</string>
+    <string name="auth_change_email">Change email</string>
 
     <!-- OTP verification screen -->
     <string name="otp_title">Verify your email</string>

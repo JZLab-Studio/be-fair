@@ -8,6 +8,7 @@ import dev.jakubzika.befair.data.storage.UserProfileStorage
 import dev.jakubzika.befair.domain.AppResult
 import dev.jakubzika.befair.domain.model.GenericResponse
 import dev.jakubzika.befair.domain.model.LoginRequest
+import dev.jakubzika.befair.domain.model.PasswordResetRequest
 import dev.jakubzika.befair.domain.model.ProfileResponse
 import dev.jakubzika.befair.domain.model.RegisterRequest
 import dev.jakubzika.befair.domain.model.TokenResponse
@@ -15,11 +16,13 @@ import dev.jakubzika.befair.domain.model.VerifyOtpRequest
 import dev.jakubzika.befair.domain.repository.AuthRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.ResponseException
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import kotlin.coroutines.cancellation.CancellationException
 
 class AuthRepositoryImpl(
     private val client: HttpClient,
@@ -59,6 +62,21 @@ class AuthRepositoryImpl(
         val profile = fetchProfileInternal()
         userProfileStorage.saveProfile(profile.displayName, profile.email)
         onSignedIn()
+    }
+
+    override suspend fun requestPasswordReset(email: String): AppResult<Unit> = try {
+        client.post("$API_BASE_URL/api/auth/password-reset") {
+            contentType(ContentType.Application.Json)
+            setBody(PasswordResetRequest(email))
+        }
+        AppResult.Success(Unit)
+    } catch (_: ResponseException) {
+        // The server answered; never reveal whether the account exists.
+        AppResult.Success(Unit)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        AppResult.Error(e.message ?: "Network error. Please try again.")
     }
 
     override suspend fun fetchProfile(): AppResult<ProfileResponse> = safeCall {
