@@ -26,7 +26,7 @@ class OverviewSummaryTest {
         ItemEventResponse(id, itemId, ItemEventType.WEAR, at, null, null, at)
 
     @Test
-    fun `aggregates invested, average per wear and tools per month`() {
+    fun `aggregates invested and average per wear and tools per month`() {
         val summary = OverviewSummary.from(
             listOf(
                 item("coat", ItemKind.CLOTHING, 20000, wears = 10, perUse = 2000),
@@ -49,7 +49,7 @@ class OverviewSummaryTest {
     }
 
     @Test
-    fun `recent activity is newest first, capped, and skips orphans`() {
+    fun `recent activity is newest first and capped and skips orphans`() {
         val items = listOf(item("a", ItemKind.CLOTHING, 100))
         val events = mapOf(
             "a" to listOf(event("1", "a", 1), event("2", "a", 3), event("3", "a", 2)),

@@ -15,6 +15,8 @@
     <string name="auth_name_placeholder">Your name</string>
     <string name="auth_password_placeholder_register">At least 8 characters</string>
     <string name="auth_password_placeholder_sign_in">Your password</string>
+    <string name="auth_show_password">Show password</string>
+    <string name="auth_hide_password">Hide password</string>
     <string name="auth_continue_with_google">Continue with Google</string>
     <string name="auth_continue_with_apple">Continue with Apple</string>
     <string name="auth_toggle_no_account">Don\'t have an account?</string>

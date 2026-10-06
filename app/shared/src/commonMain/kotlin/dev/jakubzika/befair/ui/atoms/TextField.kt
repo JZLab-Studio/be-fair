@@ -4,14 +4,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,7 +26,11 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
@@ -34,6 +40,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import be_fair.app.shared.generated.resources.Res
+import be_fair.app.shared.generated.resources.auth_hide_password
+import be_fair.app.shared.generated.resources.auth_show_password
+import org.jetbrains.compose.resources.stringResource
 
 // Input specs per DESIGN.md "Components > Inputs": 48dp tall, 4dp radius,
 // strong-hairline border that goes ink on focus and orange in the error
@@ -41,7 +51,49 @@ import androidx.compose.ui.unit.dp
 // "label-caps" (labelLarge), uppercased at the call site.
 private val TextFieldShape = RoundedCornerShape(BeFairDimension.Radius.small)
 private val TextFieldHeight = 48.dp
-private val TextFieldContentPadding = PaddingValues(horizontal = 14.dp)
+private val TextFieldHorizontalPadding = 14.dp
+
+// Trailing action per DESIGN.md: 44dp hit target inset 2dp from the border, so
+// text gets 52dp of end padding and never runs under it.
+private val TrailingTargetSize = 44.dp
+private val TrailingInset = 2.dp
+private val TextFieldTrailingPadding = 52.dp
+
+// 22x22 outline eye, 1.5 stroke; the slash is added when `crossed`.
+private fun eyeIcon(crossed: Boolean): ImageVector =
+    ImageVector.Builder(
+        name = if (crossed) "EyeCrossed" else "Eye",
+        defaultWidth = 22.dp,
+        defaultHeight = 22.dp,
+        viewportWidth = 22f,
+        viewportHeight = 22f
+    ).apply {
+        path(
+            stroke = SolidColor(Color.Black),
+            strokeLineWidth = 1.5f,
+            strokeLineJoin = StrokeJoin.Round
+        ) {
+            moveTo(2.5f, 11f)
+            curveTo(4.5f, 7.2f, 7.5f, 5.25f, 11f, 5.25f)
+            curveTo(14.5f, 5.25f, 17.5f, 7.2f, 19.5f, 11f)
+            curveTo(17.5f, 14.8f, 14.5f, 16.75f, 11f, 16.75f)
+            curveTo(7.5f, 16.75f, 4.5f, 14.8f, 2.5f, 11f)
+            close()
+        }
+        path(stroke = SolidColor(Color.Black), strokeLineWidth = 1.5f) {
+            // circle cx=11 cy=11 r=2.75
+            moveTo(8.25f, 11f)
+            arcTo(2.75f, 2.75f, 0f, true, true, 13.75f, 11f)
+            arcTo(2.75f, 2.75f, 0f, true, true, 8.25f, 11f)
+            close()
+        }
+        if (crossed) {
+            path(stroke = SolidColor(Color.Black), strokeLineWidth = 1.5f) {
+                moveTo(4f, 18f)
+                lineTo(18f, 4f)
+            }
+        }
+    }.build()
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -57,7 +109,8 @@ fun BeFairTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     singleLine: Boolean = true,
-    autofillContentType: ContentType? = null
+    autofillContentType: ContentType? = null,
+    trailingContent: (@Composable () -> Unit)? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
@@ -96,20 +149,41 @@ fun BeFairTextField(
             visualTransformation = visualTransformation,
             singleLine = singleLine,
             decorationBox = { innerTextField ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(TextFieldContentPadding),
-                    contentAlignment = Alignment.CenterStart
-                ) {
-                    if (value.isEmpty()) {
-                        Text(
-                            text = placeholder,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(TextFieldHeight)
+                            .padding(
+                                start = TextFieldHorizontalPadding,
+                                end = if (trailingContent != null) {
+                                    TextFieldTrailingPadding
+                                } else {
+                                    TextFieldHorizontalPadding
+                                }
+                            ),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        if (value.isEmpty()) {
+                            Text(
+                                text = placeholder,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        innerTextField()
                     }
-                    innerTextField()
+                    if (trailingContent != null) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .padding(end = TrailingInset)
+                                .size(TrailingTargetSize),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            trailingContent()
+                        }
+                    }
                 }
             }
         )
@@ -166,6 +240,8 @@ fun PasswordTextField(
     errorMessage: String? = null,
     autofillContentType: ContentType = ContentType.Password
 ) {
+    var visible by remember { mutableStateOf(false) }
+
     BeFairTextField(
         modifier = modifier,
         value = value,
@@ -176,8 +252,27 @@ fun PasswordTextField(
         isError = isError,
         errorMessage = errorMessage,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        visualTransformation = PasswordVisualTransformation(),
-        autofillContentType = autofillContentType
+        visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
+        autofillContentType = autofillContentType,
+        trailingContent = {
+            // The icon shows the current state and stays neutral, even in error.
+            IconButton(
+                onClick = { visible = !visible },
+                modifier = Modifier.size(TrailingTargetSize)
+            ) {
+                Icon(
+                    imageVector = eyeIcon(crossed = visible),
+                    contentDescription = stringResource(
+                        if (visible) Res.string.auth_hide_password else Res.string.auth_show_password
+                    ),
+                    tint = if (visible) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        LocalBeFairExtendedColors.current.ink3
+                    }
+                )
+            }
+        }
     )
 }
 

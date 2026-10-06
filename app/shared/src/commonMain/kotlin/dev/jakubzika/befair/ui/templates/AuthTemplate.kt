@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -157,23 +158,26 @@ fun AuthTemplate(
 
         Spacer(modifier = Modifier.height(BeFairDimension.Spacing.sm))
 
-        PasswordTextField(
-            value = password,
-            onValueChange = { password = it },
-            placeholder = if (mode == AuthMode.Register) {
-                stringResource(Res.string.auth_password_placeholder_register)
-            } else {
-                stringResource(Res.string.auth_password_placeholder_sign_in)
-            },
-            isEnabled = !isLoading,
-            isError = passwordError != null,
-            errorMessage = passwordError,
-            autofillContentType = if (mode == AuthMode.Register) {
-                ContentType.NewPassword
-            } else {
-                ContentType.Password
-            }
-        )
+        // key(mode) resets the field's visibility toggle when switching modes.
+        key(mode) {
+            PasswordTextField(
+                value = password,
+                onValueChange = { password = it },
+                placeholder = if (mode == AuthMode.Register) {
+                    stringResource(Res.string.auth_password_placeholder_register)
+                } else {
+                    stringResource(Res.string.auth_password_placeholder_sign_in)
+                },
+                isEnabled = !isLoading,
+                isError = passwordError != null,
+                errorMessage = passwordError,
+                autofillContentType = if (mode == AuthMode.Register) {
+                    ContentType.NewPassword
+                } else {
+                    ContentType.Password
+                }
+            )
+        }
 
         if (serverError != null) {
             Spacer(modifier = Modifier.height(BeFairDimension.Spacing.sm))
