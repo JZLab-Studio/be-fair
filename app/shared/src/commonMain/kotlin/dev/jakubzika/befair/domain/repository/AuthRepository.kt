@@ -18,6 +18,12 @@ interface AuthRepository {
     /** Logs in a verified user; on success persists the returned tokens. */
     suspend fun login(email: String, password: String): AppResult<Unit>
 
+    /**
+     * Asks the backend to email a password reset link. Account-enumeration safe: any HTTP
+     * response (even an error status) is reported as success; only a network failure is an error.
+     */
+    suspend fun requestPasswordReset(email: String): AppResult<Unit>
+
     /** Calls the protected profile endpoint (proves Bearer injection). */
     suspend fun fetchProfile(): AppResult<ProfileResponse>
 

@@ -40,15 +40,26 @@ fun AuthScreen(
                 val result = when (mode) {
                     AuthMode.Register -> authRepository.register(name!!, email, password)
                     AuthMode.SignIn -> authRepository.login(email, password)
+                    // Forgot/Sent never go through onSubmit; they use onSendReset.
+                    AuthMode.Forgot, AuthMode.Sent -> {
+                        isLoading = false
+                        return@launch
+                    }
                 }
                 isLoading = false
                 when (result) {
                     is AppResult.Success -> when (mode) {
                         AuthMode.Register -> onNavigateToOtp(email)
                         AuthMode.SignIn -> onAuthenticated()
+                        AuthMode.Forgot, AuthMode.Sent -> Unit
                     }
                     is AppResult.Error -> serverError = result.message
                 }
+            }
+        },
+        onSendReset = { email, onResult ->
+            scope.launch {
+                onResult(authRepository.requestPasswordReset(email) is AppResult.Success)
             }
         },
         // Social sign-in is not wired to the backend yet; keep existing shortcut behaviour.
