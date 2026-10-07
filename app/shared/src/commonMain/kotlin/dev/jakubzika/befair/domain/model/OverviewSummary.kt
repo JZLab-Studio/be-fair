@@ -1,5 +1,7 @@
 package dev.jakubzika.befair.domain.model
 
+import dev.jakubzika.befair.util.todayEpochDay
+
 /** One line of the Overview "Recent activity" list: a logged [event] resolved to its [item]. */
 data class ActivityEntry(
     val item: ItemResponse,
@@ -14,20 +16,24 @@ data class OverviewSummary(
     val investedCents: Long,
     /** Clothing spend ÷ total wears; null while nothing has been worn. */
     val avgCostPerWearCents: Long?,
-    /** Σ(price ÷ months owned) over tools. */
-    val toolsPerMonthCents: Long,
+    /** Σ(price ÷ full periods owned) over tools, per the chosen [ToolBasis]. */
+    val toolsCostCents: Long,
     /** The worn garment with the highest cost per wear; null when there is none. */
     val attention: ItemResponse?,
 ) {
     companion object {
-        fun from(items: List<ItemResponse>): OverviewSummary {
+        fun from(
+            items: List<ItemResponse>,
+            basis: ToolBasis = ToolBasis.MONTH,
+            todayEpochDay: Long = todayEpochDay(),
+        ): OverviewSummary {
             val clothes = items.filter { it.kind == ItemKind.CLOTHING }
             val totalWears = clothes.sumOf { (it.stats?.wearCount ?: 0).toLong() }
             return OverviewSummary(
                 investedCents = items.sumOf { it.priceCents },
                 avgCostPerWearCents = if (totalWears > 0) clothes.sumOf { it.priceCents } / totalWears else null,
-                toolsPerMonthCents = items.filter { it.kind == ItemKind.TOOL }
-                    .sumOf { it.stats?.costPerMonthCents ?: 0L },
+                toolsCostCents = items.filter { it.kind == ItemKind.TOOL }
+                    .sumOf { it.primaryCostCents(basis, todayEpochDay) ?: 0L },
                 attention = clothes
                     .filter { (it.stats?.wearCount ?: 0) > 0 && it.stats?.costPerUseCents != null }
                     .maxByOrNull { it.stats?.costPerUseCents ?: 0L },

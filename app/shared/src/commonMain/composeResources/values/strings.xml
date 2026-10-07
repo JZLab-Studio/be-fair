@@ -58,7 +58,7 @@
 
     <string name="screen_overview_invested_label">Total invested</string>
     <string name="screen_overview_avg_per_wear_label">Avg per wear</string>
-    <string name="screen_overview_tools_per_month_label">Tools per month</string>
+    <string name="screen_overview_tools_label">Tools, %1$s</string>
     <string name="screen_overview_attention">%1$s is your highest cost per wear at %2$s. Wear it more to bring it down.</string>
     <string name="screen_overview_recent_activity">Recent activity</string>
     <string name="screen_overview_all_items">All items</string>
@@ -75,7 +75,7 @@
     <string name="screen_overview_empty_step_2_title">Log each wear or use</string>
     <string name="screen_overview_empty_step_2_description">One tap on +1 in your items list.</string>
     <string name="screen_overview_empty_step_3_title">See the true cost</string>
-    <string name="screen_overview_empty_step_3_description">Cost per wear for clothes, per month for tools.</string>
+    <string name="screen_overview_empty_step_3_description">Cost per wear for clothes, %1$s for tools.</string>
     <string name="screen_overview_empty_data_stays_on_device">Your data stays on this device.</string>
 
     <!-- Items screen -->
@@ -92,7 +92,6 @@
     <string name="item_row_meta_clothing">%1$d wears · %2$d washes</string>
     <string name="item_row_meta_tool">%1$d uses · since %2$s</string>
     <string name="item_row_stat_per_wear">per wear</string>
-    <string name="item_row_stat_per_month">per month</string>
     <string name="item_row_stat_placeholder">—</string>
     <string name="item_row_quick_log_wear">Log a wear</string>
     <string name="item_row_quick_log_use">Log a use</string>
@@ -101,11 +100,10 @@
     <!-- Item detail screen -->
     <string name="screen_item_detail_back">Back</string>
     <string name="screen_item_detail_stat_per_wear">per wear</string>
-    <string name="screen_item_detail_stat_per_month">per month</string>
     <string name="screen_item_detail_stat_per_wash">per wash</string>
     <string name="screen_item_detail_stat_wears">wears</string>
     <string name="screen_item_detail_stat_washes">washes</string>
-    <string name="screen_item_detail_stat_months_owned">months owned</string>
+    <string name="screen_item_detail_stat_periods_owned">%1$s owned</string>
     <string name="screen_item_detail_stat_uses">uses</string>
     <string name="screen_item_detail_stat_paid">paid</string>
     <string name="screen_item_detail_fact_paid">Paid</string>
@@ -140,13 +138,13 @@
     <string name="screen_add_new_item_category_label">Category</string>
     <string name="screen_add_new_item_category_placeholder_clothing">Outerwear</string>
     <string name="screen_add_new_item_category_placeholder_tool">Power tool</string>
-    <string name="screen_add_new_item_price_label">Price paid (€)</string>
+    <string name="screen_add_new_item_price_label">Price paid (%1$s)</string>
     <string name="screen_add_new_item_price_placeholder">0.00</string>
     <string name="screen_add_new_item_price_error">Enter what you paid.</string>
     <string name="screen_add_new_item_date_label">Purchase date</string>
     <string name="screen_add_new_item_date_error">Pick the purchase date.</string>
     <string name="screen_add_new_item_hint_clothing">Cost per wear = price ÷ wears logged. Log a wear each time you put it on.</string>
-    <string name="screen_add_new_item_hint_tool">Cost per month = price ÷ months owned, counted from the purchase date.</string>
+    <string name="screen_add_new_item_hint_tool">Cost %1$s = price ÷ %2$s owned, counted from the purchase date.</string>
     <string name="screen_add_new_item_submit">Add item</string>
     <string name="screen_add_new_item_submitting">Adding…</string>
 
@@ -155,8 +153,47 @@
     <string name="screen_profile_preferences">Preferences</string>
     <string name="screen_profile_settings">Settings</string>
     <string name="screen_profile_settings_summary">%1$s · tools %2$s</string>
-    <string name="screen_profile_currency_default">Euro (€)</string>
-    <string name="screen_profile_tool_basis_default">per month</string>
+    <string name="screen_profile_currency_eur">Euro (€)</string>
+    <string name="screen_profile_currency_usd">US dollar ($)</string>
+    <string name="screen_profile_currency_custom">Custom (%1$s)</string>
     <string name="screen_profile_account">Account</string>
     <string name="screen_profile_sign_out">Sign out</string>
+
+    <!-- Settings screen -->
+    <string name="screen_settings_title">Settings</string>
+    <string name="screen_settings_back">Back</string>
+    <string name="screen_settings_currency_section">Currency</string>
+    <string name="screen_settings_currency_eur">Euro</string>
+    <string name="screen_settings_currency_usd">US dollar</string>
+    <string name="screen_settings_currency_custom">Custom</string>
+    <string name="screen_settings_currency_custom_meta_empty">Your own name, e.g. CHF</string>
+    <string name="screen_settings_currency_hint">Amounts aren\'t converted. The currency only changes how prices are labelled.</string>
+    <string name="screen_settings_custom_label">Currency name</string>
+    <string name="screen_settings_custom_placeholder">e.g. CHF, zł, credits</string>
+    <string name="screen_settings_custom_error">Enter a name for your currency.</string>
+    <string name="screen_settings_basis_section">Tool cost basis</string>
+    <string name="screen_settings_basis_day_meta">Price ÷ days owned</string>
+    <string name="screen_settings_basis_week_meta">Price ÷ weeks owned</string>
+    <string name="screen_settings_basis_month_meta">Price ÷ months owned</string>
+    <string name="screen_settings_basis_year_meta">Price ÷ years owned</string>
+    <string name="screen_settings_basis_preview">%1$s: %2$s %3$s</string>
+    <string name="screen_settings_footer">Settings and data are stored on this device.</string>
+
+    <!-- Tool cost basis labels: adjective, "per …", singular and plural unit -->
+    <string name="basis_day_adj">Daily</string>
+    <string name="basis_week_adj">Weekly</string>
+    <string name="basis_month_adj">Monthly</string>
+    <string name="basis_year_adj">Yearly</string>
+    <string name="basis_day_per">per day</string>
+    <string name="basis_week_per">per week</string>
+    <string name="basis_month_per">per month</string>
+    <string name="basis_year_per">per year</string>
+    <string name="basis_day_one">day</string>
+    <string name="basis_week_one">week</string>
+    <string name="basis_month_one">month</string>
+    <string name="basis_year_one">year</string>
+    <string name="basis_day_many">days</string>
+    <string name="basis_week_many">weeks</string>
+    <string name="basis_month_many">months</string>
+    <string name="basis_year_many">years</string>
 </resources>

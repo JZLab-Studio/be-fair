@@ -51,6 +51,9 @@ import be_fair.app.shared.generated.resources.screen_add_new_item_type_clothing
 import be_fair.app.shared.generated.resources.screen_add_new_item_type_label
 import be_fair.app.shared.generated.resources.screen_add_new_item_type_tool
 import dev.jakubzika.befair.domain.model.ItemKind
+import dev.jakubzika.befair.ui.LocalAppSettings
+import dev.jakubzika.befair.ui.per
+import dev.jakubzika.befair.ui.unit
 import dev.jakubzika.befair.ui.atoms.BeFairDimension
 import dev.jakubzika.befair.ui.atoms.BeFairTextField
 import dev.jakubzika.befair.ui.atoms.BeFairTheme
@@ -75,6 +78,7 @@ fun AddNewItemTemplate(
     submitting: Boolean = false,
     errorMessage: String? = null
 ) {
+    val settings = LocalAppSettings.current
     var kind by remember { mutableStateOf(ItemKind.CLOTHING) }
     var name by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("") }
@@ -203,7 +207,7 @@ fun AddNewItemTemplate(
                 modifier = Modifier.fillMaxWidth(),
                 value = price,
                 onValueChange = { price = it },
-                label = stringResource(Res.string.screen_add_new_item_price_label),
+                label = stringResource(Res.string.screen_add_new_item_price_label, settings.currencyLabel),
                 placeholder = stringResource(Res.string.screen_add_new_item_price_placeholder),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 isError = priceError != null,
@@ -228,7 +232,11 @@ fun AddNewItemTemplate(
                 text = if (kind == ItemKind.CLOTHING) {
                     stringResource(Res.string.screen_add_new_item_hint_clothing)
                 } else {
-                    stringResource(Res.string.screen_add_new_item_hint_tool)
+                    stringResource(
+                        Res.string.screen_add_new_item_hint_tool,
+                        settings.toolBasis.per(),
+                        settings.toolBasis.unit(2)
+                    )
                 },
                 style = MaterialTheme.typography.labelMedium,
                 color = LocalBeFairExtendedColors.current.ink3

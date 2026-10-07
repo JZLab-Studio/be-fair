@@ -19,13 +19,15 @@ import be_fair.app.shared.generated.resources.Res
 import be_fair.app.shared.generated.resources.item_row_stat_placeholder
 import be_fair.app.shared.generated.resources.screen_overview_avg_per_wear_label
 import be_fair.app.shared.generated.resources.screen_overview_invested_label
-import be_fair.app.shared.generated.resources.screen_overview_tools_per_month_label
+import be_fair.app.shared.generated.resources.screen_overview_tools_label
 import dev.jakubzika.befair.domain.model.OverviewSummary
+import dev.jakubzika.befair.ui.LocalAppSettings
+import dev.jakubzika.befair.ui.per
 import dev.jakubzika.befair.ui.atoms.BeFairDimension
 import dev.jakubzika.befair.ui.atoms.BeFairTheme
 import dev.jakubzika.befair.ui.atoms.LocalBeFairExtendedColors
-import dev.jakubzika.befair.util.formatEuroCents
-import dev.jakubzika.befair.util.formatEuroWhole
+import dev.jakubzika.befair.util.formatMoneyCents
+import dev.jakubzika.befair.util.formatMoneyWhole
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -37,6 +39,7 @@ fun OverviewStatsCard(
     summary: OverviewSummary,
     modifier: Modifier = Modifier
 ) {
+    val settings = LocalAppSettings.current
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -46,7 +49,7 @@ fun OverviewStatsCard(
     ) {
         Stat(
             label = stringResource(Res.string.screen_overview_invested_label),
-            value = formatEuroWhole(summary.investedCents),
+            value = formatMoneyWhole(summary.investedCents, settings),
             valueStyle = MaterialTheme.typography.displayLarge
         )
 
@@ -59,14 +62,14 @@ fun OverviewStatsCard(
             Stat(
                 modifier = Modifier.weight(1f),
                 label = stringResource(Res.string.screen_overview_avg_per_wear_label),
-                value = summary.avgCostPerWearCents?.let(::formatEuroCents)
+                value = summary.avgCostPerWearCents?.let { formatMoneyCents(it, settings) }
                     ?: stringResource(Res.string.item_row_stat_placeholder),
                 valueStyle = MaterialTheme.typography.headlineLarge
             )
             Stat(
                 modifier = Modifier.weight(1f),
-                label = stringResource(Res.string.screen_overview_tools_per_month_label),
-                value = formatEuroCents(summary.toolsPerMonthCents),
+                label = stringResource(Res.string.screen_overview_tools_label, settings.toolBasis.per()),
+                value = formatMoneyCents(summary.toolsCostCents, settings),
                 valueStyle = MaterialTheme.typography.headlineLarge
             )
         }
@@ -105,7 +108,7 @@ private fun OverviewStatsCardPreview() {
             summary = OverviewSummary(
                 investedCents = 128000,
                 avgCostPerWearCents = 609,
-                toolsPerMonthCents = 1850,
+                toolsCostCents = 1850,
                 attention = null
             )
         )

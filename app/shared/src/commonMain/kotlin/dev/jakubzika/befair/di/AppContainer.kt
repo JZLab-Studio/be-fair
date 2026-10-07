@@ -7,11 +7,14 @@ import dev.jakubzika.befair.data.network.createHttpClient
 import dev.jakubzika.befair.data.repository.AuthRepositoryImpl
 import dev.jakubzika.befair.data.repository.ItemRepositoryImpl
 import dev.jakubzika.befair.data.repository.ProfileRepositoryImpl
+import dev.jakubzika.befair.data.repository.SettingsRepositoryImpl
+import dev.jakubzika.befair.data.storage.SettingsStorage
 import dev.jakubzika.befair.data.storage.TokenStorage
 import dev.jakubzika.befair.data.storage.UserProfileStorage
 import dev.jakubzika.befair.domain.repository.AuthRepository
 import dev.jakubzika.befair.domain.repository.ItemRepository
 import dev.jakubzika.befair.domain.repository.ProfileRepository
+import dev.jakubzika.befair.domain.repository.SettingsRepository
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -52,7 +55,12 @@ class AppContainer(
         ProfileRepositoryImpl(coreContainer.httpClient)
     }
 
-    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    // On-device display preferences (currency label, tool cost basis).
+    val settingsStorage: SettingsStorage by lazy { SettingsStorage() }
+
+    val settingsRepository: SettingsRepository by lazy { SettingsRepositoryImpl(settingsStorage) }
+
+    private val appScope =CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     val itemRepository: ItemRepository by lazy {
         ItemRepositoryImpl(authHttpClient, database.itemDao(), appScope)

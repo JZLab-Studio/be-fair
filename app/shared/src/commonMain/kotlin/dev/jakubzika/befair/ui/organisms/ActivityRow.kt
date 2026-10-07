@@ -28,7 +28,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import be_fair.app.shared.generated.resources.Res
 import be_fair.app.shared.generated.resources.item_row_content_description
-import be_fair.app.shared.generated.resources.item_row_stat_per_month
 import be_fair.app.shared.generated.resources.item_row_stat_per_wear
 import be_fair.app.shared.generated.resources.item_row_stat_placeholder
 import be_fair.app.shared.generated.resources.screen_item_detail_event_repair
@@ -42,11 +41,15 @@ import dev.jakubzika.befair.domain.model.ItemEventType
 import dev.jakubzika.befair.domain.model.ItemKind
 import dev.jakubzika.befair.domain.model.ItemResponse
 import dev.jakubzika.befair.domain.model.ItemStats
+import dev.jakubzika.befair.domain.model.primaryCostCents
+import dev.jakubzika.befair.ui.LocalAppSettings
+import dev.jakubzika.befair.ui.per
 import dev.jakubzika.befair.ui.atoms.BeFairDimension
 import dev.jakubzika.befair.ui.atoms.BeFairTheme
 import dev.jakubzika.befair.ui.atoms.LocalBeFairExtendedColors
 import dev.jakubzika.befair.util.formatDateFromMillis
-import dev.jakubzika.befair.util.formatEuroCents
+import dev.jakubzika.befair.util.formatMoneyCents
+import dev.jakubzika.befair.util.todayEpochDay
 import org.jetbrains.compose.resources.stringResource
 
 private val RowMinHeight = 56.dp
@@ -74,14 +77,13 @@ fun ActivityRow(
         verb,
         formatDateFromMillis(entry.event.occurredAt)
     )
-    val statCents = when (item.kind) {
-        ItemKind.CLOTHING -> item.stats?.costPerUseCents
-        ItemKind.TOOL -> item.stats?.costPerMonthCents
-    }
-    val value = statCents?.let(::formatEuroCents) ?: stringResource(Res.string.item_row_stat_placeholder)
+    val settings = LocalAppSettings.current
+    val value = item.primaryCostCents(settings.toolBasis, todayEpochDay())
+        ?.let { formatMoneyCents(it, settings) }
+        ?: stringResource(Res.string.item_row_stat_placeholder)
     val unit = when (item.kind) {
         ItemKind.CLOTHING -> stringResource(Res.string.item_row_stat_per_wear)
-        ItemKind.TOOL -> stringResource(Res.string.item_row_stat_per_month)
+        ItemKind.TOOL -> settings.toolBasis.per()
     }
     val description = stringResource(Res.string.item_row_content_description, item.name, meta, value, unit)
 

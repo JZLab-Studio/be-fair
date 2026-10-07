@@ -33,18 +33,21 @@ import be_fair.app.shared.generated.resources.item_row_meta_clothing
 import be_fair.app.shared.generated.resources.item_row_meta_tool
 import be_fair.app.shared.generated.resources.item_row_quick_log_use
 import be_fair.app.shared.generated.resources.item_row_quick_log_wear
-import be_fair.app.shared.generated.resources.item_row_stat_per_month
 import be_fair.app.shared.generated.resources.item_row_stat_per_wear
 import be_fair.app.shared.generated.resources.item_row_stat_placeholder
 import dev.jakubzika.befair.domain.model.ItemKind
 import dev.jakubzika.befair.domain.model.ItemResponse
 import dev.jakubzika.befair.domain.model.ItemStats
+import dev.jakubzika.befair.domain.model.primaryCostCents
+import dev.jakubzika.befair.ui.LocalAppSettings
+import dev.jakubzika.befair.ui.per
 import dev.jakubzika.befair.ui.atoms.BeFairDimension
 import dev.jakubzika.befair.ui.atoms.BeFairTheme
 import dev.jakubzika.befair.ui.atoms.LocalBeFairExtendedColors
 import dev.jakubzika.befair.ui.atoms.QuickAddButton
-import dev.jakubzika.befair.util.formatEuroCents
+import dev.jakubzika.befair.util.formatMoneyCents
 import dev.jakubzika.befair.util.formatMonthYear
+import dev.jakubzika.befair.util.todayEpochDay
 import org.jetbrains.compose.resources.stringResource
 
 private val RowMinHeight = 56.dp
@@ -85,11 +88,14 @@ fun ItemRow(
     )
 
     val metaText = itemMetaText(item, stats)
-    val statValue = stats?.primaryValueCents(item.kind)?.let(::formatEuroCents)
-        ?: stringResource(Res.string.item_row_stat_placeholder)
+    val settings = LocalAppSettings.current
+    val statValue = when (item.kind) {
+        ItemKind.CLOTHING -> stats?.costPerUseCents
+        ItemKind.TOOL -> item.primaryCostCents(settings.toolBasis, todayEpochDay())
+    }?.let { formatMoneyCents(it, settings) } ?: stringResource(Res.string.item_row_stat_placeholder)
     val statLabel = when (item.kind) {
         ItemKind.CLOTHING -> stringResource(Res.string.item_row_stat_per_wear)
-        ItemKind.TOOL -> stringResource(Res.string.item_row_stat_per_month)
+        ItemKind.TOOL -> settings.toolBasis.per()
     }
     val quickLogDescription = when (item.kind) {
         ItemKind.CLOTHING -> stringResource(Res.string.item_row_quick_log_wear)
@@ -176,11 +182,6 @@ private fun itemMetaText(item: ItemResponse, stats: ItemStats?): String = when (
         stats?.useCount ?: 0,
         formatMonthYear(item.purchasedOn)
     )
-}
-
-private fun ItemStats.primaryValueCents(kind: ItemKind): Long? = when (kind) {
-    ItemKind.CLOTHING -> costPerUseCents
-    ItemKind.TOOL -> costPerMonthCents
 }
 
 @Preview(backgroundColor = 0xFFFFFF, showBackground = true)
