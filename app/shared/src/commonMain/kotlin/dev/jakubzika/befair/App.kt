@@ -3,6 +3,7 @@ package dev.jakubzika.befair
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -36,6 +37,10 @@ import kotlinx.serialization.serializer
 fun App() {
     // DI container initialization
     val appContainer = remember { AppContainer() }
+    // Settings sync on every app start; a failure keeps the cached values.
+    LaunchedEffect(appContainer) {
+        if (appContainer.authRepository.isLoggedIn()) appContainer.settingsRepository.sync()
+    }
     CompositionLocalProvider(LocalAppContainer provides appContainer) {
         // General app theme
         BeFairTheme {

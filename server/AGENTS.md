@@ -98,6 +98,13 @@ erDiagram
         long created_at
         long deleted_at
     }
+    USER_SETTINGS {
+        int user_id PK, FK
+        string currency "ISO 4217"
+        string tool_basis "PER_MONTH | PER_YEAR"
+        long updated_at
+    }
+    USERS ||--o| USER_SETTINGS : "user_id (CASCADE)"
     USERS ||--o{ ITEMS : "user_id (CASCADE)"
     ITEMS ||--o{ ITEM_EVENTS : "item_id (CASCADE)"
 ```

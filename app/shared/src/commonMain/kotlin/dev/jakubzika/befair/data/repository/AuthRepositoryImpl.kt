@@ -1,6 +1,7 @@
 package dev.jakubzika.befair.data.repository
 
 import dev.jakubzika.befair.data.local.ItemDao
+import dev.jakubzika.befair.data.local.SettingsDao
 import dev.jakubzika.befair.data.network.API_BASE_URL
 import dev.jakubzika.befair.data.network.safeCall
 import dev.jakubzika.befair.data.storage.TokenStorage
@@ -29,6 +30,7 @@ class AuthRepositoryImpl(
     private val tokenStorage: TokenStorage,
     private val userProfileStorage: UserProfileStorage,
     private val itemDao: ItemDao,
+    private val settingsDao: SettingsDao,
     // Best-effort hook run after a successful sign-in (e.g. to prefetch items); its outcome never fails login.
     private val onSignedIn: suspend () -> Unit = {},
 ): AuthRepository {
@@ -88,6 +90,7 @@ class AuthRepositoryImpl(
         userProfileStorage.clearProfile()
         // Drop the previous account's cached items so they never show for the next user.
         itemDao.clear()
+        settingsDao.clear()
     }
 
     override fun isLoggedIn(): Boolean =
