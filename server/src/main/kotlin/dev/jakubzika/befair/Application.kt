@@ -4,9 +4,11 @@ import dev.jakubzika.befair.auth.JwtConfig
 import dev.jakubzika.befair.data.db.DatabaseFactory
 import dev.jakubzika.befair.data.db.ItemRepository
 import dev.jakubzika.befair.data.db.UserRepository
+import dev.jakubzika.befair.data.db.UserSettingsRepository
 import dev.jakubzika.befair.domain.model.GenericResponse
 import dev.jakubzika.befair.routes.authRoutes
 import dev.jakubzika.befair.routes.itemRoutes
+import dev.jakubzika.befair.routes.settingsRoutes
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
@@ -35,6 +37,7 @@ fun Application.module() {
     DatabaseFactory.init()
     val userRepository = UserRepository()
     val itemRepository = ItemRepository()
+    val userSettingsRepository = UserSettingsRepository()
 
     install(ContentNegotiation) {
         json()
@@ -81,5 +84,6 @@ fun Application.module() {
         }
         authRoutes(userRepository)
         itemRoutes(itemRepository)
+        settingsRoutes(userSettingsRepository)
     }
 }

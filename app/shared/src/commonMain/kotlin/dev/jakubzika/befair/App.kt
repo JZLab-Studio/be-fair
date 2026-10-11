@@ -3,6 +3,7 @@ package dev.jakubzika.befair
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -42,6 +43,10 @@ fun App() {
     val appContainer = remember { AppContainer() }
     // Collected once per app render so every screen formats with the same live settings.
     val settings by appContainer.settingsRepository.settings.collectAsState()
+    // Pull the server's settings on every app start; a failure keeps the cached values.
+    LaunchedEffect(appContainer) {
+        if (appContainer.authRepository.isLoggedIn()) appContainer.settingsRepository.sync()
+    }
     CompositionLocalProvider(
         LocalAppContainer provides appContainer,
         LocalAppSettings provides settings

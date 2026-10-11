@@ -9,10 +9,11 @@ import kotlinx.coroutines.Dispatchers
 
 const val DATABASE_FILE_NAME = "befair.db"
 
-@Database(entities = [ItemEntity::class], version = 1, exportSchema = true)
+@Database(entities = [ItemEntity::class, SettingsEntity::class], version = 2, exportSchema = true)
 @ConstructedBy(BeFairDatabaseConstructor::class)
 abstract class BeFairDatabase : RoomDatabase() {
     abstract fun itemDao(): ItemDao
+    abstract fun settingsDao(): SettingsDao
 }
 
 // Room's compiler generates the actual implementation for each target.

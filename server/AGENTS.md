@@ -98,6 +98,14 @@ erDiagram
         long created_at
         long deleted_at
     }
+    USER_SETTINGS {
+        int user_id PK, FK
+        string currency "EUR | USD | CUSTOM"
+        string custom_currency "max 12 chars"
+        string tool_basis "DAY | WEEK | MONTH | YEAR"
+        long updated_at
+    }
+    USERS ||--o| USER_SETTINGS : "user_id (CASCADE)"
     USERS ||--o{ ITEMS : "user_id (CASCADE)"
     ITEMS ||--o{ ITEM_EVENTS : "item_id (CASCADE)"
 ```
@@ -107,6 +115,7 @@ erDiagram
 - **users.id** auto-increments; used as FK in items and (indirectly) item_events.
 - **items.id** is a client-generated UUID string (36 chars) to prevent duplicates on retried creates after flaky networks. All FKs from item_events cascade on delete.
 - **item_events** uses a single table with a `type` discriminator (wear/wash/use/repair/etc.) to calculate cost-per-use and cost-per-month without per-kind counter columns on items.
+- **user_settings** has at most one row per user; `GET /api/settings` returns defaults when none exists and `PUT /api/settings` replaces the whole set (upsert). The DTO and option enums live in `core` (`SettingsModels.kt`).
 - **Soft deletes:** items and item_events have `deleted_at` columns; queries should filter `WHERE deleted_at IS NULL` when appropriate.
 - **Indices:** `items(user_id)` enables fast per-user queries; `item_events(item_id, occurred_at)` enables efficient cost calculations and event history lookups.
 

@@ -1,6 +1,7 @@
 package dev.jakubzika.befair.ui.screens
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -26,6 +27,11 @@ fun SettingsScreen(onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     val settings = LocalAppSettings.current
     val items by container.itemRepository.items.collectAsState()
+
+    // Edits save locally on every tap; they are uploaded once, when the screen is left.
+    DisposableEffect(repository) {
+        onDispose { repository.pushPending() }
+    }
 
     // The preview uses the first tool; with no tools it is hidden.
     val firstTool = remember(items) { items.firstOrNull { it.kind == ItemKind.TOOL } }

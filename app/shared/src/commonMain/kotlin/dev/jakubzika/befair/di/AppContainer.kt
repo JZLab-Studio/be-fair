@@ -8,7 +8,6 @@ import dev.jakubzika.befair.data.repository.AuthRepositoryImpl
 import dev.jakubzika.befair.data.repository.ItemRepositoryImpl
 import dev.jakubzika.befair.data.repository.ProfileRepositoryImpl
 import dev.jakubzika.befair.data.repository.SettingsRepositoryImpl
-import dev.jakubzika.befair.data.storage.SettingsStorage
 import dev.jakubzika.befair.data.storage.TokenStorage
 import dev.jakubzika.befair.data.storage.UserProfileStorage
 import dev.jakubzika.befair.domain.repository.AuthRepository
@@ -45,9 +44,12 @@ class AppContainer(
     val database: BeFairDatabase by lazy { createBeFairDatabase() }
 
     val authRepository: AuthRepository by lazy {
-        AuthRepositoryImpl(authHttpClient, tokenStorage, userProfileStorage, database.itemDao()) {
-            // Prefetch items once the user is signed in; failures fall back to the cached list.
+        AuthRepositoryImpl(
+            authHttpClient, tokenStorage, userProfileStorage, database.itemDao(), database.settingsDao(),
+        ) {
+            // Prefetch items and settings once the user is signed in; failures fall back to the cache.
             itemRepository.refresh()
+            settingsRepository.sync()
         }
     }
 
@@ -55,12 +57,12 @@ class AppContainer(
         ProfileRepositoryImpl(coreContainer.httpClient)
     }
 
-    // On-device display preferences (currency label, tool cost basis).
-    val settingsStorage: SettingsStorage by lazy { SettingsStorage() }
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    val settingsRepository: SettingsRepository by lazy { SettingsRepositoryImpl(settingsStorage) }
-
-    private val appScope =CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    // Display preferences (currency label, tool cost basis): cached in Room, synced with the server.
+    val settingsRepository: SettingsRepository by lazy {
+        SettingsRepositoryImpl(authHttpClient, database.settingsDao(), appScope)
+    }
 
     val itemRepository: ItemRepository by lazy {
         ItemRepositoryImpl(authHttpClient, database.itemDao(), appScope)
