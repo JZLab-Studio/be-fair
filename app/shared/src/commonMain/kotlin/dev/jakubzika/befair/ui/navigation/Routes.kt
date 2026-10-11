@@ -35,3 +35,6 @@ data class ItemDetail(val id: String) : Route
 
 @Serializable
 data object AddNewItem : Route
+
+@Serializable
+data object Settings : Route

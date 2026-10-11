@@ -21,6 +21,7 @@ import dev.jakubzika.befair.ui.navigation.Items
 import dev.jakubzika.befair.ui.navigation.Overview
 import dev.jakubzika.befair.ui.navigation.Profile
 import dev.jakubzika.befair.ui.navigation.Route
+import dev.jakubzika.befair.ui.navigation.Settings
 import dev.jakubzika.befair.ui.organisms.BottomBar
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -39,6 +40,7 @@ fun MainScreen(
                     subclass(Profile::class, serializer())
                     subclass(ItemDetail::class, serializer())
                     subclass(AddNewItem::class, serializer())
+                    subclass(Settings::class, serializer())
                 }
             }
         }
@@ -59,12 +61,15 @@ fun MainScreen(
 
     Scaffold(
         bottomBar = {
-            BottomBar(
-                currentRoute = currentTab.value,
-                onNavigateToOverview = { currentTab.value = Overview },
-                onNavigateToItems = { currentTab.value = Items },
-                onNavigateToProfile = { currentTab.value = Profile }
-            )
+            // Settings is a full-screen sub-page: no tab bar.
+            if (currentBackStack.lastOrNull() !is Settings) {
+                BottomBar(
+                    currentRoute = currentTab.value,
+                    onNavigateToOverview = { currentTab.value = Overview },
+                    onNavigateToItems = { currentTab.value = Items },
+                    onNavigateToProfile = { currentTab.value = Profile }
+                )
+            }
         }
     ) { innerPadding ->
         NavDisplay(
@@ -87,8 +92,12 @@ fun MainScreen(
                 }
                 entry<Profile> {
                     ProfileScreen(
-                        onSignOut = onSignOut
+                        onSignOut = onSignOut,
+                        onOpenSettings = { (profileBackStack as NavBackStack<Route>).add(Settings) }
                     )
+                }
+                entry<Settings> {
+                    SettingsScreen(onBack = { currentBackStack.removeLast() })
                 }
                 entry<ItemDetail> { key ->
                     ItemDetailScreen(

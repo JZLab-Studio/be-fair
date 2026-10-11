@@ -15,9 +15,10 @@ import dev.jakubzika.befair.domain.AppResult
 import dev.jakubzika.befair.domain.model.ItemEventResponse
 import dev.jakubzika.befair.domain.model.ItemEventType
 import dev.jakubzika.befair.ui.LocalAppContainer
+import dev.jakubzika.befair.ui.LocalAppSettings
 import dev.jakubzika.befair.ui.templates.ItemDetailHistoryLimit
 import dev.jakubzika.befair.ui.templates.ItemDetailTemplate
-import dev.jakubzika.befair.util.monthsOwned
+import dev.jakubzika.befair.util.periodsOwned
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 
@@ -53,7 +54,7 @@ fun ItemDetailScreen(
     ItemDetailTemplate(
         item = item,
         history = history,
-        monthsOwned = monthsOwned(item.purchasedOn),
+        periodsOwned = periodsOwned(item.purchasedOn, LocalAppSettings.current.toolBasis),
         confirmingRemove = confirmingRemove,
         onBack = onBack,
         onLog = { type ->

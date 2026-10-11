@@ -4,10 +4,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import be_fair.app.shared.generated.resources.Res
-import be_fair.app.shared.generated.resources.screen_profile_currency_default
+import be_fair.app.shared.generated.resources.screen_profile_currency_custom
+import be_fair.app.shared.generated.resources.screen_profile_currency_eur
+import be_fair.app.shared.generated.resources.screen_profile_currency_usd
 import be_fair.app.shared.generated.resources.screen_profile_settings_summary
-import be_fair.app.shared.generated.resources.screen_profile_tool_basis_default
+import dev.jakubzika.befair.domain.model.CurrencyChoice
 import dev.jakubzika.befair.ui.LocalAppContainer
+import dev.jakubzika.befair.ui.LocalAppSettings
+import dev.jakubzika.befair.ui.per
 import org.jetbrains.compose.resources.stringResource
 import dev.jakubzika.befair.ui.templates.ProfileTemplate
 import kotlinx.coroutines.launch
@@ -23,11 +27,16 @@ fun ProfileScreen(
     val name = remember { container.userProfileStorage.getDisplayName().orEmpty() }
     val email = remember { container.userProfileStorage.getEmail().orEmpty() }
 
-    // No settings store exists yet; the summary uses the defaults until Settings lands.
+    val settings = LocalAppSettings.current
+    val currencyName = when (settings.currency) {
+        CurrencyChoice.EUR -> stringResource(Res.string.screen_profile_currency_eur)
+        CurrencyChoice.USD -> stringResource(Res.string.screen_profile_currency_usd)
+        CurrencyChoice.CUSTOM -> stringResource(Res.string.screen_profile_currency_custom, settings.currencyLabel)
+    }
     val summary = stringResource(
         Res.string.screen_profile_settings_summary,
-        stringResource(Res.string.screen_profile_currency_default),
-        stringResource(Res.string.screen_profile_tool_basis_default),
+        currencyName,
+        settings.toolBasis.per(),
     )
 
     ProfileTemplate(

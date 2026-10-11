@@ -15,6 +15,7 @@ import dev.jakubzika.befair.domain.model.OverviewSummary
 import dev.jakubzika.befair.domain.model.RecentActivityLimit
 import dev.jakubzika.befair.domain.model.recentActivity
 import dev.jakubzika.befair.ui.LocalAppContainer
+import dev.jakubzika.befair.ui.LocalAppSettings
 import dev.jakubzika.befair.ui.templates.OverviewEmptyTemplate
 import dev.jakubzika.befair.ui.templates.OverviewTemplate
 import org.jetbrains.compose.resources.stringResource
@@ -28,6 +29,7 @@ fun OverviewScreen(
     val container = LocalAppContainer.current
     val userName = remember { container.userProfileStorage.getDisplayName().orEmpty() }
     val items by container.itemRepository.items.collectAsState()
+    val toolBasis = LocalAppSettings.current.toolBasis
     var eventsByItem by remember { mutableStateOf<Map<String, List<ItemEventResponse>>>(emptyMap()) }
 
     LaunchedEffect(Unit) { container.itemRepository.refresh() }
@@ -54,7 +56,7 @@ fun OverviewScreen(
         )
     } else {
         OverviewTemplate(
-            summary = remember(items) { OverviewSummary.from(items) },
+            summary = remember(items, toolBasis) { OverviewSummary.from(items, toolBasis) },
             recent = remember(items, eventsByItem) { recentActivity(items, eventsByItem) },
             onOpenItem = onNavToItemDetailScreen,
             onShowAllItems = onNavToItemsScreen
