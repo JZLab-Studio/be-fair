@@ -2,15 +2,6 @@ package dev.jakubzika.befair.domain.model
 
 import dev.jakubzika.befair.util.periodsOwned
 
-/** Which label prices carry. Amounts are never converted — the currency is a label only. */
-enum class CurrencyChoice { EUR, USD, CUSTOM }
-
-/** The period a tool's cost is spread over. */
-enum class ToolBasis { DAY, WEEK, MONTH, YEAR }
-
-/** Longest custom currency name that is stored. */
-const val CustomCurrencyMaxLength = 12
-
 /** Shown in place of a custom currency name while it is blank. */
 const val CustomCurrencyFallback = "¤"
 

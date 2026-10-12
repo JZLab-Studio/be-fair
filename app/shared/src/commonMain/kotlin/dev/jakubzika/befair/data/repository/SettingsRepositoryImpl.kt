@@ -1,48 +1,99 @@
 package dev.jakubzika.befair.data.repository
 
-import dev.jakubzika.befair.data.storage.SETTINGS_KEY_CURRENCY
-import dev.jakubzika.befair.data.storage.SETTINGS_KEY_CUSTOM_CURRENCY
-import dev.jakubzika.befair.data.storage.SETTINGS_KEY_TOOL_BASIS
-import dev.jakubzika.befair.data.storage.SettingsStorage
+import dev.jakubzika.befair.data.local.SettingsDao
+import dev.jakubzika.befair.data.local.toDto
+import dev.jakubzika.befair.data.local.toEntity
+import dev.jakubzika.befair.data.local.toModel
+import dev.jakubzika.befair.data.network.API_BASE_URL
+import dev.jakubzika.befair.data.network.safeCall
+import dev.jakubzika.befair.domain.AppResult
 import dev.jakubzika.befair.domain.model.AppSettings
-import dev.jakubzika.befair.domain.model.CurrencyChoice
 import dev.jakubzika.befair.domain.model.CustomCurrencyMaxLength
-import dev.jakubzika.befair.domain.model.ToolBasis
+import dev.jakubzika.befair.domain.model.UserSettingsDto
 import dev.jakubzika.befair.domain.repository.SettingsRepository
-import kotlinx.coroutines.flow.MutableStateFlow
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.get
+import io.ktor.client.request.put
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
+/**
+ * Settings live in a Room row ([dao]) so they work offline, and are mirrored to the server's
+ * `/api/settings` ([client] must be the auth-configured one). Local edits are flagged `dirty`
+ * until the server accepts them, so a download never overwrites an edit that has not been
+ * uploaded yet.
+ */
 class SettingsRepositoryImpl(
-    private val storage: SettingsStorage,
+    private val client: HttpClient,
+    private val dao: SettingsDao,
+    private val scope: CoroutineScope,
 ) : SettingsRepository {
 
-    private val _settings = MutableStateFlow(load())
-    override val settings: StateFlow<AppSettings> = _settings.asStateFlow()
+    // Uploads and downloads never overlap. Local edits do not take it, so typing is never blocked
+    // by a network call.
+    private val syncLock = Mutex()
 
-    override suspend fun update(transform: (AppSettings) -> AppSettings) {
-        val next = transform(_settings.value).let {
-            it.copy(customCurrency = it.customCurrency.take(CustomCurrencyMaxLength))
-        }
-        _settings.value = next
-        storage.putString(SETTINGS_KEY_CURRENCY, next.currency.name)
-        storage.putString(SETTINGS_KEY_CUSTOM_CURRENCY, next.customCurrency)
-        storage.putString(SETTINGS_KEY_TOOL_BASIS, next.toolBasis.name)
+    // Local edits run one at a time, in call order, in the repository's own scope so they survive
+    // the calling screen being disposed.
+    private val edits = Channel<suspend () -> Unit>(Channel.UNLIMITED)
+
+    init {
+        scope.launch { for (edit in edits) edit() }
     }
 
-    // Stored values are merged over the defaults, so missing or unrecognised keys fall back safely.
-    private fun load(): AppSettings {
-        val defaults = AppSettings()
-        return AppSettings(
-            currency = storage.getString(SETTINGS_KEY_CURRENCY)
-                ?.let { name -> CurrencyChoice.entries.firstOrNull { it.name == name } }
-                ?: defaults.currency,
-            customCurrency = storage.getString(SETTINGS_KEY_CUSTOM_CURRENCY)
-                ?.take(CustomCurrencyMaxLength)
-                ?: defaults.customCurrency,
-            toolBasis = storage.getString(SETTINGS_KEY_TOOL_BASIS)
-                ?.let { name -> ToolBasis.entries.firstOrNull { it.name == name } }
-                ?: defaults.toolBasis,
-        )
+    override val settings: StateFlow<AppSettings> = dao.observe()
+        .map { it?.toModel() ?: AppSettings() }
+        .stateIn(scope, SharingStarted.Eagerly, AppSettings())
+
+    override fun update(transform: (AppSettings) -> AppSettings) {
+        edits.trySend {
+            val current = dao.get()?.toModel() ?: AppSettings()
+            val next = transform(current).let {
+                it.copy(customCurrency = it.customCurrency.take(CustomCurrencyMaxLength))
+            }
+            dao.upsert(next.toEntity(dirty = true))
+        }
+    }
+
+    override suspend fun sync(): AppResult<Unit> = syncLock.withLock {
+        if (dao.get()?.dirty == true) push() else pull()
+    }
+
+    override fun pushPending() {
+        scope.launch {
+            // Wait for every edit queued so far to reach Room before checking the dirty flag.
+            val applied = CompletableDeferred<Unit>()
+            edits.trySend { applied.complete(Unit) }
+            applied.await()
+            syncLock.withLock {
+                if (dao.get()?.dirty == true) push()
+            }
+        }
+    }
+
+    private suspend fun pull(): AppResult<Unit> = safeCall {
+        val downloaded: UserSettingsDto = client.get("$API_BASE_URL/api/settings").body()
+        dao.replaceIfClean(downloaded.toModel().toEntity(dirty = false))
+    }
+
+    private suspend fun push(): AppResult<Unit> = safeCall {
+        val pending = dao.get() ?: return@safeCall
+        client.put("$API_BASE_URL/api/settings") {
+            contentType(ContentType.Application.Json)
+            setBody(pending.toModel().toDto())
+        }
+        dao.markClean(pending)
     }
 }
