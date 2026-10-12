@@ -46,7 +46,7 @@ class SettingsRepositoryImpl(
         .map { it?.toModel() ?: AppSettings() }
         .stateIn(scope, SharingStarted.Eagerly, AppSettings())
 
-    override suspend fun update(transform: (AppSettings) -> AppSettings) {
+    override suspend fun update(transform: (AppSettings) -> AppSettings) = syncLock.withLock {
         val current = dao.get()?.toModel() ?: AppSettings()
         val next = transform(current).let {
             it.copy(customCurrency = it.customCurrency.take(CustomCurrencyMaxLength))
