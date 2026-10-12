@@ -2,6 +2,8 @@
 
 Guidance for AI agents working in this repository.
 
+Read skills from `.agents/skills/`
+
 ## Read This First
 
 Read [`README.md`](./README.md) for human-oriented product and project context.
