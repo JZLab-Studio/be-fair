@@ -8,8 +8,11 @@ interface SettingsRepository {
     /** The current preferences; changes apply and persist locally immediately. */
     val settings: StateFlow<AppSettings>
 
-    /** Applies [transform] to the current settings and saves the result locally; no network call. */
-    suspend fun update(transform: (AppSettings) -> AppSettings)
+    /**
+     * Queues [transform] to be applied to the current settings and saved locally; no network call.
+     * Edits apply in call order and keep running after the caller is gone.
+     */
+    fun update(transform: (AppSettings) -> AppSettings)
 
     /**
      * Synchronizes with the server: uploads local edits the server has not accepted yet, otherwise

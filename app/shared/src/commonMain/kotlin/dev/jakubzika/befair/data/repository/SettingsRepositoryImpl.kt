@@ -18,7 +18,9 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -39,19 +41,30 @@ class SettingsRepositoryImpl(
     private val scope: CoroutineScope,
 ) : SettingsRepository {
 
-    // Uploads and downloads never overlap.
+    // Uploads and downloads never overlap. Local edits do not take it, so typing is never blocked
+    // by a network call.
     private val syncLock = Mutex()
+
+    // Local edits run one at a time, in call order, in the repository's own scope so they survive
+    // the calling screen being disposed.
+    private val edits = Channel<suspend () -> Unit>(Channel.UNLIMITED)
+
+    init {
+        scope.launch { for (edit in edits) edit() }
+    }
 
     override val settings: StateFlow<AppSettings> = dao.observe()
         .map { it?.toModel() ?: AppSettings() }
         .stateIn(scope, SharingStarted.Eagerly, AppSettings())
 
-    override suspend fun update(transform: (AppSettings) -> AppSettings) = syncLock.withLock {
-        val current = dao.get()?.toModel() ?: AppSettings()
-        val next = transform(current).let {
-            it.copy(customCurrency = it.customCurrency.take(CustomCurrencyMaxLength))
+    override fun update(transform: (AppSettings) -> AppSettings) {
+        edits.trySend {
+            val current = dao.get()?.toModel() ?: AppSettings()
+            val next = transform(current).let {
+                it.copy(customCurrency = it.customCurrency.take(CustomCurrencyMaxLength))
+            }
+            dao.upsert(next.toEntity(dirty = true))
         }
-        dao.upsert(next.toEntity(dirty = true))
     }
 
     override suspend fun sync(): AppResult<Unit> = syncLock.withLock {
@@ -60,6 +73,10 @@ class SettingsRepositoryImpl(
 
     override fun pushPending() {
         scope.launch {
+            // Wait for every edit queued so far to reach Room before checking the dirty flag.
+            val applied = CompletableDeferred<Unit>()
+            edits.trySend { applied.complete(Unit) }
+            applied.await()
             syncLock.withLock {
                 if (dao.get()?.dirty == true) push()
             }
