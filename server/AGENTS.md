@@ -101,6 +101,21 @@ To change the schema:
 **Never edit an applied migration.** Flyway checksums each file and refuses to start if one
 changes; correct a mistake with a new version instead.
 
+⚠️ **Do not deploy the `buildFatJar` output.** Flyway finds its resolvers and resource types
+through `META-INF/services/org.flywaydb.core.extensibility.Plugin`, which both `flyway-core`
+and `flyway-database-postgresql` provide. The Ktor plugin sets `duplicatesStrategy = EXCLUDE`
+on its shadow task, so the fat jar keeps only whichever copy comes first and loses
+`flyway-core`'s `CoreResourceTypeProvider` — the class that recognises a file as a SQL
+migration. `mergeServiceFiles()` does not help: the duplicate is dropped before the merge
+transformer runs, and the Ktor plugin reconfigures the task late enough to defeat both
+eager and `afterEvaluate` overrides.
+
+Deploy the `installDist` / `distTar` distribution instead (what the `Dockerfile` uses). It
+keeps dependencies as separate jars, so service discovery behaves exactly as it does under
+`:server:run` and `:server:test`. `failOnMissingLocations` and `validateMigrationNaming` in
+`DatabaseFactory` make a fat jar fail loudly at startup rather than silently serving an empty
+schema, but the jar still cannot migrate.
+
 ### Running tests
 
 `:server:test` starts a real PostgreSQL container via Testcontainers (`TestDatabase`), so a

@@ -61,6 +61,12 @@ object DatabaseFactory {
             .locations(MIGRATIONS_LOCATION)
             .baselineOnMigrate(true)
             .baselineVersion("1")
+            // Both default to false, which makes a packaging mistake silent: Flyway logs
+            // "0 migrations found" at WARN and the server boots against an empty schema,
+            // failing later on the first query instead of at startup. Refuse to start
+            // instead -- a server that cannot find its migrations is misconfigured.
+            .failOnMissingLocations(true)
+            .validateMigrationNaming(true)
             .load()
             .migrate()
     }
