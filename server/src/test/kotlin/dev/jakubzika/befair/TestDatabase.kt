@@ -2,34 +2,31 @@ package dev.jakubzika.befair
 
 import dev.jakubzika.befair.data.db.DatabaseConfig
 import dev.jakubzika.befair.data.db.DatabaseFactory
-import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
-
-/**
- * Self-typed subclass so Kotlin can name the container type. [PostgreSQLContainer] is
- * declared as `PostgreSQLContainer<SELF extends PostgreSQLContainer<SELF>>`, which has no
- * usable Kotlin spelling without binding `SELF` like this.
- */
-private class BeFairPostgresContainer :
-    PostgreSQLContainer<BeFairPostgresContainer>(DockerImageName.parse(IMAGE)) {
-    companion object {
-        /** Pinned to the same major version the deployed database runs. */
-        const val IMAGE = "postgres:17-alpine"
-    }
-}
 
 /**
  * One PostgreSQL container shared by the whole test run.
  *
  * The suite talks to a real Postgres rather than an embedded stand-in so the tests exercise
  * the dialect the server actually ships against -- `upsert` compiles to `ON CONFLICT` here and
- * `MERGE` on H2, and constraint violations surface different SQL states.
+ * `MERGE` on H2, and a failed statement aborts the surrounding transaction, which is how the
+ * idempotent-create path in `ItemRepository` was caught.
  *
  * Requires a running Docker daemon. Testcontainers reaps the container when the JVM exits.
+ *
+ * Testcontainers must stay on 2.x: 1.x asks the daemon for Docker API v1.32, and Docker
+ * Engine 29 raised its minimum to v1.40 and rejects anything older with an opaque HTTP 400
+ * ("Could not find a valid Docker environment"). 2.0.2 moved the default to v1.44.
  */
 object TestDatabase {
 
-    private val container by lazy { BeFairPostgresContainer().apply { start() } }
+    /** Pinned to the same major version the deployed database runs. */
+    private const val IMAGE = "postgres:17-alpine"
+
+    private val container by lazy {
+        PostgreSQLContainer(DockerImageName.parse(IMAGE)).apply { start() }
+    }
 
     /**
      * Points [DatabaseFactory] at the shared container, starting it on first use.

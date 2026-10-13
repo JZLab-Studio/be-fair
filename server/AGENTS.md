@@ -92,6 +92,13 @@ replace-or-create (see `UserSettingsRepository.save`).
 `init` block; add that to any new test class that touches the database. The suite shares one
 database and isolates cases with unique emails and generated ids.
 
+**Testcontainers must stay on 2.x.** The 1.x line requests Docker API v1.32, and Docker
+Engine 29 raised its minimum to v1.40 — it rejects older clients with an HTTP 400 that
+Testcontainers reports as the much less helpful "Could not find a valid Docker environment".
+2.0.2 moved the default to v1.44. Note that module coordinates gained a `testcontainers-`
+prefix in 2.x (`org.testcontainers:testcontainers-postgresql`), and `PostgreSQLContainer`
+moved to `org.testcontainers.postgresql` and is no longer self-generic.
+
 ### Database Schema
 
 ```mermaid
