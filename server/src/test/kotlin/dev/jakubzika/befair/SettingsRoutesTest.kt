@@ -25,6 +25,10 @@ import kotlin.test.assertEquals
 
 class SettingsRoutesTest {
 
+    init {
+        TestDatabase.ensureReady()
+    }
+
     private fun ApplicationTestBuilder.jsonClient() = createClient {
         install(ContentNegotiation) { json() }
     }

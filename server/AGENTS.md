@@ -52,14 +52,38 @@ fun Application.configureRouting() {
 3. Install `ContentNegotiation` with `json()` if returning JSON (add `ktor-server-content-negotiation` to `gradle/libs.versions.toml` when first needed).
 4. Write a `testApplication` test (see Testing section below).
 
-## Database (Exposed + H2)
+## Database (Exposed + PostgreSQL)
 
-Exposed and H2 are already in `libs.versions.toml` (`exposed-core`, `exposed-jdbc`, `h2`). Add them to `server/build.gradle.kts` dependencies when needed.
+The server runs on PostgreSQL through a HikariCP pool. `exposed-core`, `exposed-jdbc`,
+`postgresql`, and `hikari` are wired in `server/build.gradle.kts`.
+
+`DatabaseFactory.init()` builds the pool and is **idempotent** — the first call connects and
+later calls return the same `Database`. Never bypass it with your own `Database.connect`, or
+the process ends up with one pool per caller.
+
+Connection settings come from the environment via `DatabaseConfig.fromEnv()`, defaulting to a
+local database so `./gradlew :server:run` works with no setup:
+
+| Variable | Default |
+|---|---|
+| `DATABASE_URL` | `jdbc:postgresql://localhost:5432/befair` |
+| `DATABASE_USER` | `befair` |
+| `DATABASE_PASSWORD` | `befair` |
+| `DATABASE_MAX_POOL_SIZE` | `10` |
 
 Conventions when using Exposed:
 - Define table objects as `object MyTable : Table("my_table") { … }` in a `db/` package.
-- Create/migrate schema in `module()` via `transaction { SchemaUtils.create(MyTable) }`.
+- Add new tables to the `SchemaUtils.create(…)` call in `DatabaseFactory`.
 - Wrap all DB access in `transaction { … }` blocks.
+- Keep table definitions dialect-neutral; let Exposed generate the SQL (`upsert` becomes
+  `ON CONFLICT` on Postgres) rather than writing raw statements.
+
+### Running tests
+
+`:server:test` starts a real PostgreSQL container via Testcontainers (`TestDatabase`), so a
+**running Docker daemon is required**. Test classes call `TestDatabase.ensureReady()` in an
+`init` block; add that to any new test class that touches the database. The suite shares one
+database and isolates cases with unique emails and generated ids.
 
 ### Database Schema
 
