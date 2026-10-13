@@ -78,6 +78,13 @@ Conventions when using Exposed:
 - Keep table definitions dialect-neutral; let Exposed generate the SQL (`upsert` becomes
   `ON CONFLICT` on Postgres) rather than writing raw statements.
 
+⚠️ **Never recover from a failed statement inside the same transaction.** PostgreSQL aborts
+the whole transaction when a statement fails and refuses every later command with `25P02`, so
+"insert, catch the constraint violation, then query the existing row" does not work — the
+recovery query fails too. Let the database resolve the conflict in one statement instead:
+`insertIgnore` for idempotent inserts (see `ItemRepository.create`), `upsert` for
+replace-or-create (see `UserSettingsRepository.save`).
+
 ### Running tests
 
 `:server:test` starts a real PostgreSQL container via Testcontainers (`TestDatabase`), so a
