@@ -28,6 +28,8 @@ dependencies {
     implementation(libs.exposed.jdbc)
     implementation(libs.postgresql)
     implementation(libs.hikari)
+    implementation(libs.flyway.core)
+    runtimeOnly(libs.flyway.postgresql)
     implementation(libs.bcrypt)
     testImplementation(libs.ktor.serverTestHost)
     testImplementation(libs.ktor.client.contentNegotiation)
