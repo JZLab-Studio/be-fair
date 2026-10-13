@@ -1,0 +1,54 @@
+# Local development and deployment stack: PostgreSQL plus the Ktor server.
+#
+#   docker compose up --build
+#
+# Credentials default to the same throwaway values as `DatabaseConfig`, so a plain
+# `docker compose up` needs no setup. Override them with an `.env` file or real environment
+# variables for anything reachable from outside your machine.
+
+services:
+  db:
+    # Pinned to the same major version TestDatabase runs the test suite against.
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-befair}
+      POSTGRES_USER: ${POSTGRES_USER:-befair}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-befair}
+    ports:
+      # Published so `./gradlew :server:run` on the host can use this database with
+      # DatabaseConfig's default localhost:5432 URL.
+      - "5432:5432"
+    volumes:
+      - befair-db:/var/lib/postgresql/data
+    healthcheck:
+      # The server runs migrations on startup, so it must not start before Postgres is
+      # accepting connections -- not merely before the container is running.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-befair} -d ${POSTGRES_DB:-befair}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # `db` is the compose service name; the server reaches Postgres over the project
+      # network, not localhost.
+      DATABASE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-befair}
+      DATABASE_USER: ${POSTGRES_USER:-befair}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-befair}
+    ports:
+      # Mirrors SERVER_PORT in core/.../Constants.kt.
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  # Named volume, so the database survives `docker compose down` and image rebuilds. This is
+  # the whole point of moving off H2: server state no longer lives inside the app container.
+  befair-db:
