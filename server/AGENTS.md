@@ -73,7 +73,6 @@ local database so `./gradlew :server:run` works with no setup:
 
 Conventions when using Exposed:
 - Define table objects as `object MyTable : Table("my_table") { … }` in a `db/` package.
-- Add new tables to the `SchemaUtils.create(…)` call in `DatabaseFactory`.
 - Wrap all DB access in `transaction { … }` blocks.
 - Keep table definitions dialect-neutral; let Exposed generate the SQL (`upsert` becomes
   `ON CONFLICT` on Postgres) rather than writing raw statements.
@@ -84,6 +83,39 @@ the whole transaction when a statement fails and refuses every later command wit
 recovery query fails too. Let the database resolve the conflict in one statement instead:
 `insertIgnore` for idempotent inserts (see `ItemRepository.create`), `upsert` for
 replace-or-create (see `UserSettingsRepository.save`).
+
+### Schema migrations (Flyway)
+
+The schema is owned by versioned SQL in `server/src/main/resources/db/migration`, applied by
+Flyway on startup from `DatabaseFactory`. Exposed no longer creates tables — `SchemaUtils` is
+not called anywhere, so **adding a table object is not enough**.
+
+To change the schema:
+
+1. Add `V<n>__<description>.sql` in `db/migration`, numbered one above the highest existing
+   version. Use `snake_case` table and column names matching the Exposed `Table("…")` names.
+2. Add or update the matching Exposed `object … : Table` so the Kotlin side agrees.
+3. Run `./gradlew :server:test` — the Testcontainers database is created from these
+   migrations, so repository and route tests exercise the migrated schema. Add explicit schema
+   metadata assertions for constraints, defaults, or indexes that behavior tests may not observe.
+
+**Never edit an applied migration.** Flyway checksums each file and refuses to start if one
+changes; correct a mistake with a new version instead.
+
+⚠️ **Do not deploy the `buildFatJar` output.** Flyway finds its resolvers and resource types
+through `META-INF/services/org.flywaydb.core.extensibility.Plugin`, which both `flyway-core`
+and `flyway-database-postgresql` provide. The Ktor plugin sets `duplicatesStrategy = EXCLUDE`
+on its shadow task, so the fat jar keeps only whichever copy comes first and loses
+`flyway-core`'s `CoreResourceTypeProvider` — the class that recognises a file as a SQL
+migration. `mergeServiceFiles()` does not help: the duplicate is dropped before the merge
+transformer runs, and the Ktor plugin reconfigures the task late enough to defeat both
+eager and `afterEvaluate` overrides.
+
+Deploy the `installDist` / `distTar` distribution instead (what the `Dockerfile` uses). It
+keeps dependencies as separate jars, so service discovery behaves exactly as it does under
+`:server:run` and `:server:test`. `failOnMissingLocations` and `validateMigrationNaming` in
+`DatabaseFactory` make a fat jar fail loudly at startup rather than silently serving an empty
+schema, but the jar still cannot migrate.
 
 ### Running tests
 
