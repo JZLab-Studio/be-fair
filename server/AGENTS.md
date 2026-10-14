@@ -96,7 +96,8 @@ To change the schema:
    version. Use `snake_case` table and column names matching the Exposed `Table("…")` names.
 2. Add or update the matching Exposed `object … : Table` so the Kotlin side agrees.
 3. Run `./gradlew :server:test` — the Testcontainers database is created from these
-   migrations, so a mismatch between SQL and table objects fails the suite.
+   migrations, so repository and route tests exercise the migrated schema. Add explicit schema
+   metadata assertions for constraints, defaults, or indexes that behavior tests may not observe.
 
 **Never edit an applied migration.** Flyway checksums each file and refuses to start if one
 changes; correct a mistake with a new version instead.
