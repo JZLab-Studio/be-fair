@@ -3,8 +3,13 @@
 #   docker compose up --build
 #
 # Credentials default to the same throwaway values as `DatabaseConfig`, so a plain
-# `docker compose up` needs no setup. Override them with an `.env` file or real environment
-# variables for anything reachable from outside your machine.
+# `docker compose up` needs no setup. To override them locally, create an untracked `.env` file:
+#
+#   POSTGRES_DB=befair
+#   POSTGRES_USER=befair
+#   POSTGRES_PASSWORD=befair
+#
+# Use real credentials for anything reachable from outside your machine.
 
 services:
   db:
