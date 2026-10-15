@@ -17,7 +17,7 @@ services:
     ports:
       # Published so `./gradlew :server:run` on the host can use this database with
       # DatabaseConfig's default localhost:5432 URL.
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - befair-db:/var/lib/postgresql/data
     healthcheck:
