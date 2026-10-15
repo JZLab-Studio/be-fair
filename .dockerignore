@@ -1,0 +1,29 @@
+# Keep the build context small and the builder stage reproducible: host build output must
+# never leak in, or a stale `server-all.jar` could be copied instead of a freshly built one.
+**/build/
+.gradle/
+.kotlin/
+build/
+
+# Host-specific Android SDK path. The builder has no SDK and does not need one.
+local.properties
+.env
+
+.git/
+.github/
+.idea/
+.claude/
+.agents/
+*.iml
+.DS_Store
+
+# iOS sources are not part of the server image.
+app/iosApp/
+xcuserdata/
+
+node_modules/
+
+Dockerfile
+.dockerignore
+docker-compose.yml
+*.md
