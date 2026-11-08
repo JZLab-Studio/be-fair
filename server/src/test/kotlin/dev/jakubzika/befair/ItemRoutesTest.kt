@@ -40,6 +40,10 @@ import kotlin.test.assertTrue
 
 class ItemRoutesTest {
 
+    init {
+        TestDatabase.ensureReady()
+    }
+
     private fun ApplicationTestBuilder.jsonClient() = createClient {
         install(ContentNegotiation) { json() }
     }

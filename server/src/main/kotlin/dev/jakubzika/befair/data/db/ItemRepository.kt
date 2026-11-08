@@ -1,7 +1,6 @@
 package dev.jakubzika.befair.data.db
 
 import dev.jakubzika.befair.domain.model.ItemStats
-import java.sql.SQLException
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.Dispatchers
@@ -17,24 +16,22 @@ import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
-import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.insertIgnore
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 
-/** Result of an idempotent create: [created] is false when the id already existed. */
-data class CreateResult<T>(val row: T, val created: Boolean)
-
 /**
- * True when this failure is a duplicate-key violation.
+ * Result of an idempotent create: [created] is false when the id already existed.
  *
- * Exposed wraps every driver error in `ExposedSQLException`, so catching
- * `SQLIntegrityConstraintViolationException` by type never matches -- the SQL state has to be
- * inspected instead. Class `23` is "integrity constraint violation" (`23505` = duplicate key).
+ * The inserts that produce this use `insertIgnore` (`INSERT … ON CONFLICT DO NOTHING` on
+ * PostgreSQL) so a replayed create is settled inside one statement. The earlier approach --
+ * insert, catch the duplicate-key error, then re-read the stored row -- cannot work here:
+ * PostgreSQL aborts the entire transaction when a statement fails, so every following command
+ * is refused with `25P02` until the transaction ends. H2 tolerated continuing after the
+ * failure, which is why this only surfaced on the move to PostgreSQL.
  */
-private fun SQLException.isUniqueViolation(): Boolean =
-    generateSequence<Throwable>(this) { it.cause }
-        .any { it is SQLException && it.sqlState?.startsWith("23") == true }
+data class CreateResult<T>(val row: T, val created: Boolean)
 
 /**
  * Data-access layer for [Items] and [ItemEvents]. Each call runs a blocking Exposed
@@ -81,24 +78,24 @@ class ItemRepository {
 
     /** Inserts [row], or returns the already-stored row for the same id unchanged. */
     suspend fun create(row: ItemRow): CreateResult<ItemRow> = dbQuery {
-        try {
-            Items.insert {
-                it[id] = row.id
-                it[userId] = row.userId
-                it[kind] = row.kind
-                it[name] = row.name
-                it[category] = row.category
-                it[priceCents] = row.priceCents
-                it[currency] = row.currency
-                it[purchasedOn] = row.purchasedOn
-                it[archivedAt] = row.archivedAt
-                it[deletedAt] = row.deletedAt
-                it[createdAt] = row.createdAt
-                it[updatedAt] = row.updatedAt
-            }
+        val inserted = Items.insertIgnore {
+            it[id] = row.id
+            it[userId] = row.userId
+            it[kind] = row.kind
+            it[name] = row.name
+            it[category] = row.category
+            it[priceCents] = row.priceCents
+            it[currency] = row.currency
+            it[purchasedOn] = row.purchasedOn
+            it[archivedAt] = row.archivedAt
+            it[deletedAt] = row.deletedAt
+            it[createdAt] = row.createdAt
+            it[updatedAt] = row.updatedAt
+        }.insertedCount > 0
+
+        if (inserted) {
             CreateResult(row, created = true)
-        } catch (e: SQLException) {
-            if (!e.isUniqueViolation()) throw e
+        } else {
             val existing = Items.selectAll().where { Items.id eq row.id }.map(::toItemRow).single()
             CreateResult(existing, created = false)
         }
@@ -146,23 +143,24 @@ class ItemRepository {
 
     /** Idempotent event insert + `updatedAt` bump in a single transaction. */
     suspend fun createEventAndTouch(row: ItemEventRow, now: Long): CreateResult<ItemEventRow> = dbQuery {
-        try {
-            ItemEvents.insert {
-                it[id] = row.id
-                it[itemId] = row.itemId
-                it[type] = row.type
-                it[occurredAt] = row.occurredAt
-                it[costCents] = row.costCents
-                it[note] = row.note
-                it[createdAt] = row.createdAt
-                it[deletedAt] = row.deletedAt
-            }
+        val inserted = ItemEvents.insertIgnore {
+            it[id] = row.id
+            it[itemId] = row.itemId
+            it[type] = row.type
+            it[occurredAt] = row.occurredAt
+            it[costCents] = row.costCents
+            it[note] = row.note
+            it[createdAt] = row.createdAt
+            it[deletedAt] = row.deletedAt
+        }.insertedCount > 0
+
+        if (inserted) {
             Items.update({ Items.id eq row.itemId }) {
                 it[updatedAt] = now
             }
             CreateResult(row, created = true)
-        } catch (e: SQLException) {
-            if (!e.isUniqueViolation()) throw e
+        } else {
+            // Replay: leave `updatedAt` alone so a retried log does not double count.
             val existing = ItemEvents.selectAll().where { ItemEvents.id eq row.id }.map(::toItemEventRow).single()
             CreateResult(existing, created = false)
         }

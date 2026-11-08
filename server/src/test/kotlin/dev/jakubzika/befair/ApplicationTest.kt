@@ -11,6 +11,10 @@ import kotlin.test.*
 
 class ApplicationTest {
 
+    init {
+        TestDatabase.ensureReady()
+    }
+
     @Test
     fun testRoot() = testApplication {
         application {

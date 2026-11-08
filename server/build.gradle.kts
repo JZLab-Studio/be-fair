@@ -26,9 +26,11 @@ dependencies {
     implementation(libs.ktor.serializationKotlinxJson)
     implementation(libs.exposed.core)
     implementation(libs.exposed.jdbc)
-    implementation(libs.h2)
+    implementation(libs.postgresql)
+    implementation(libs.hikari)
     implementation(libs.bcrypt)
     testImplementation(libs.ktor.serverTestHost)
     testImplementation(libs.ktor.client.contentNegotiation)
     testImplementation(libs.kotlin.testJunit)
+    testImplementation(libs.testcontainers.postgresql)
 }
