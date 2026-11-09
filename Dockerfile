@@ -45,8 +45,8 @@ FROM eclipse-temurin:21-jre-alpine AS runtime
 RUN addgroup -S befair && adduser -S -G befair befair
 
 WORKDIR /app
-# Dependencies first: they change far less often than application code, so this layer stays
-# cached across ordinary code-only rebuilds.
+# `lib/` holds both the third-party jars and the application jar, so this layer is rebuilt
+# whenever the application code changes. That is acceptable at this image size.
 COPY --from=build /build/server/build/install/server/lib lib
 COPY --from=build /build/server/build/install/server/bin bin
 USER befair
