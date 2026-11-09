@@ -106,7 +106,10 @@ Connection settings are read from the environment, defaulting to local developme
 | `DATABASE_PASSWORD` | `befair` |
 | `DATABASE_MAX_POOL_SIZE` | `10` |
 
-Override all of them for any deployment reachable from outside your machine. Schema changes
+For Gradle runs, override these settings for any deployment reachable from outside your machine.
+For Docker Compose, set `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD` in an untracked
+`.env` file instead; Compose derives `DATABASE_URL`, `DATABASE_USER`, and `DATABASE_PASSWORD`
+from them. `DATABASE_MAX_POOL_SIZE` is used directly in both workflows. Schema changes
 go in `server/src/main/resources/db/migration` as new `V<n>__*.sql` files — see
 [`server/AGENTS.md`](./server/AGENTS.md).
 
