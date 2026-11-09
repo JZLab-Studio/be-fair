@@ -19,8 +19,8 @@ Be-Fair is application that allows you to track cost-effectiveness of your wared
 
 - `app/androidApp`: The entry point for the Android application.
 - `app/iosApp`: The entry point for the iOS application.
-- `app/shared`: Shared UI, navigation, and mobile domain/data logic using Compose Multiplatform.
-- `core`: Shared business logic, models, and networking (all platforms).
+- `app/shared`: Shared UI, navigation, networking, and mobile domain/data logic using Compose Multiplatform.
+- `core`: The wire contract between the apps and the server — `@Serializable` DTOs, option enums, pure domain logic, and shared constants. No networking, no platform code.
 - `server`: The Ktor backend server.
 
 ```mermaid

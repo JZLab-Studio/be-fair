@@ -23,23 +23,14 @@ kotlin {
     jvm()
 
     sourceSets {
+        // core holds only what mobile *and* the server both consume: DTOs, models, and
+        // constants. Keep this list serialization-only -- a dependency added here lands on
+        // the server's runtime classpath (and in its Docker image) too.
         commonMain.dependencies {
-            implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
-            implementation(libs.ktor.client.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
-            implementation(libs.kotlinx.coroutines.test)
-        }
-        androidMain.dependencies {
-            implementation(libs.ktor.client.okhttp)
-        }
-        iosMain.dependencies {
-            implementation(libs.ktor.client.darwin)
-        }
-        jvmMain.dependencies {
-            implementation(libs.ktor.client.cio)
         }
     }
 }

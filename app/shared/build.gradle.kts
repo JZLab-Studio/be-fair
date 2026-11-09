@@ -73,6 +73,13 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.uiTooling)
             implementation(libs.androidx.security.crypto)
+            // Ktor client engine for HttpClientFactory.android.kt
+            implementation(libs.ktor.client.okhttp)
+        }
+
+        iosMain.dependencies {
+            // Ktor client engine for HttpClientFactory.ios.kt
+            implementation(libs.ktor.client.darwin)
         }
 
         commonTest.dependencies {
