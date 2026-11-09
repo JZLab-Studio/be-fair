@@ -21,8 +21,8 @@ compose.resources {
 }
 
 kotlin {
-    androidLibrary {
-        namespace = "dev.jakubzika.befair.composeapp"
+    android {
+        namespace = "dev.jakubzika.befair.app.shared"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
 

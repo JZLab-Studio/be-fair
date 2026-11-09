@@ -7,8 +7,8 @@ plugins {
 }
 
 kotlin {
-    androidLibrary {
-        namespace = "dev.jakubzika.befair.shared"
+    android {
+        namespace = "dev.jakubzika.befair.core"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
         compilerOptions {
