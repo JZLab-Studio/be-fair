@@ -19,12 +19,17 @@ uses the code, it's misplaced → put it in `app/shared` or `server` instead.
 
 ## Step-by-step
 
-- [ ] **File**: `core/src/commonMain/kotlin/dev/jakubzika/befair/<package>/<Name>.kt`
-- [ ] **Platform split** (only if needed): add `expect` in `commonMain`, `actual` in `androidMain`,
-  `iosMain`, and `jvmMain`. Keep the `expect` signature minimal — follow the `HttpClientFactory` pattern.
+- [ ] **File**: `core/src/commonMain/kotlin/dev/jakubzika/befair/<package>/<Name>.kt` — always
+  `commonMain`. Every file in `core` lives there; its platform source sets are empty by design.
+- [ ] **Platform split**: don't. `core` has no `expect`/`actual`, and an abstraction that needs one
+  is almost always mobile client code → put it in `app/shared` (`commonMain` + `androidMain`/`iosMain`),
+  as `HttpClientFactory` does. Add one here only if the server calls the JVM `actual`.
 - [ ] **Constants** go in `core/.../Constants.kt` and are referenced by name — never inline magic values.
-- [ ] **Wire DI** (if it's a dependency): add to `CoreContainer` as `val <name>: <Name> by lazy { … }`.
-  Mobile-only dependencies go in `AppContainer`, not here.
+- [ ] **Dependencies**: `core`'s `commonMain` carries `kotlinx-serialization-json` and nothing else.
+  Adding to it also adds to the server's runtime classpath and Docker image — name the server code
+  that needs it first, or put the feature in `app/shared`.
+- [ ] **Wire DI**: nothing in `core` is instantiated, so there is no container here. Dependencies go in
+  `AppContainer` (`app/shared`).
 - [ ] **Test**: prefer `commonTest`. Add platform-specific tests only when behavior differs per platform.
-- [ ] **Validate**: `./gradlew :core:testDebugUnitTest`
-  - All targets compile: `./gradlew :core:compileKotlinAndroid :core:compileKotlinIosArm64 :core:compileKotlinJvm`
+- [ ] **Validate**: `./gradlew :core:jvmTest`
+  - All targets compile: `./gradlew :core:compileAndroidMain :core:compileKotlinIosArm64 :core:compileKotlinJvm`

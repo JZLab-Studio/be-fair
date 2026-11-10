@@ -20,15 +20,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
 /**
- * Mobile-specific dependency container. Holds mobile platform use-cases, repositories,
- * and controllers on top of the shared [CoreContainer].
+ * Mobile dependency container. Holds mobile platform use-cases, repositories, and controllers.
  *
- * Auth, secure token storage, and the auth-configured HTTP client are mobile-only and so
- * live here rather than in `core`.
+ * Everything the app needs is mobile-only — auth, secure token storage, the HTTP client and
+ * its engines, the Room cache — so it all lives here. `core` contributes shared DTOs and
+ * constants, which need no wiring.
  */
-class AppContainer(
-    val coreContainer: CoreContainer = CoreContainer()
-) {
+class AppContainer {
     // Secure, platform-backed token store (EncryptedSharedPreferences / Keychain).
     val tokenStorage: TokenStorage by lazy { TokenStorage() }
 
@@ -39,6 +37,9 @@ class AppContainer(
     private val authHttpClient: HttpClient by lazy {
         createHttpClient { configureBeFair(tokenStorage) }
     }
+
+    // Unconfigured client for calls that carry no credentials.
+    private val httpClient: HttpClient by lazy { createHttpClient() }
 
     // On-device Room cache; the server stays the source of truth.
     val database: BeFairDatabase by lazy { createBeFairDatabase() }
@@ -54,7 +55,7 @@ class AppContainer(
     }
 
     val profileRepository: ProfileRepository by lazy {
-        ProfileRepositoryImpl(coreContainer.httpClient)
+        ProfileRepositoryImpl(httpClient)
     }
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)

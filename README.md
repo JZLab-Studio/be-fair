@@ -19,8 +19,8 @@ Be-Fair is application that allows you to track cost-effectiveness of your wared
 
 - `app/androidApp`: The entry point for the Android application.
 - `app/iosApp`: The entry point for the iOS application.
-- `app/shared`: Shared UI, navigation, and mobile domain/data logic using Compose Multiplatform.
-- `core`: Shared business logic, models, and networking (all platforms).
+- `app/shared`: Shared UI, navigation, networking, and mobile domain/data logic using Compose Multiplatform.
+- `core`: The wire contract between the apps and the server — `@Serializable` DTOs, option enums, pure domain logic, and shared constants. No networking, no platform code.
 - `server`: The Ktor backend server.
 
 ```mermaid
@@ -57,6 +57,7 @@ app/shared/
 - Android Studio (for Android and KMP)
 - Xcode (for iOS development)
 - JDK 17 or higher
+- Docker (for the backend database and the server test suite)
 
 ### Running the App
 
@@ -77,10 +78,40 @@ OR run shell command:
 3. Click "Run".
 
 #### Backend
-1. Open Terminal app.
-2. Navigate to the project.
-3. Run command `./gradlew :server:run`.
-4. Open browser with URL `http://0.0.0.0:8080`.
+
+The server needs a PostgreSQL database. The quickest way to get the whole stack up is Docker:
+
+```shell
+docker compose up --build
+```
+
+That starts PostgreSQL and the server together, applies the Flyway migrations on startup, and
+serves `http://localhost:8080`. Database files live in the `befair-db` named volume, so they
+survive `docker compose down` and image rebuilds.
+
+To run the server from Gradle instead, start just the database and leave it listening on
+`localhost:5432`, which is what the connection defaults point at:
+
+```shell
+docker compose up -d db
+./gradlew :server:run
+```
+
+Connection settings are read from the environment, defaulting to local development values:
+
+| Variable | Default |
+|---|---|
+| `DATABASE_URL` | `jdbc:postgresql://localhost:5432/befair` |
+| `DATABASE_USER` | `befair` |
+| `DATABASE_PASSWORD` | `befair` |
+| `DATABASE_MAX_POOL_SIZE` | `10` |
+
+For Gradle runs, override these settings for any deployment reachable from outside your machine.
+For Docker Compose, set `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD` in an untracked
+`.env` file instead; Compose derives `DATABASE_URL`, `DATABASE_USER`, and `DATABASE_PASSWORD`
+from them. `DATABASE_MAX_POOL_SIZE` is used directly in both workflows. Schema changes
+go in `server/src/main/resources/db/migration` as new `V<n>__*.sql` files — see
+[`server/AGENTS.md`](./server/AGENTS.md).
 
 #### Testing
 ```shell
@@ -92,6 +123,9 @@ OR run shell command:
 ./gradlew :server:test
 ./gradlew :core:testDebugUnitTest
 ```
+
+`:server:test` starts a real PostgreSQL container through Testcontainers, so **Docker must be
+running** for the server suite.
 
 ## Development Rules
 

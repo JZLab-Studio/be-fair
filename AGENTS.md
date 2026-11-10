@@ -37,10 +37,10 @@ When in doubt: if the server will never need it, it belongs in `app/shared`. If 
 
 ## Dependency Injection
 
-Use the project's manual dependency containers:
+Use the project's manual dependency container:
 
-- `core/.../di/CoreContainer.kt` — shared instances (e.g. `httpClient`).
-- `app/shared/.../di/AppContainer.kt` — mobile-specific instances, wraps `CoreContainer` (exposed as `coreContainer`).
+- `app/shared/.../di/AppContainer.kt` — the single container, holding every mobile instance (HTTP clients, token storage, Room database, repositories).
+- There is no container in `core`. `core` contributes only DTOs, models, and constants, which need no wiring — nothing in it is instantiated.
 - Container provided to composables via `CompositionLocalProvider(LocalAppContainer provides container)`.
 - Accessed in composables via `LocalAppContainer.current`.
 
@@ -62,8 +62,8 @@ Use `gradle/libs.versions.toml` for versions and plugin aliases.
 - `BeFairTypography()` is a `@Composable` function (loads Inter via Compose resources) — call it only inside composition, never assign to a top-level `val`.
 - The `primary-fixed` color families in `Color.kt` are standalone `val` declarations, not part of `lightColorScheme`/`darkColorScheme` — they do not adapt between light/dark mode.
 - `LocalAppContainer` uses `staticCompositionLocalOf` and errors if no value is provided — every composable tree must be wrapped with the provider in `App.kt`.
-- `expect fun getPlatform(): Platform` lives in `core` with `actual` implementations in `androidMain`, `iosMain`, and `jvmMain` — not in `app/shared`.
-- `HttpClientFactory` follows the same `expect`/`actual` pattern in `core` across all three platform source sets.
+- `HttpClientFactory` is an `expect`/`actual` pair in **`app/shared`** (`commonMain` + `androidMain`/`iosMain`), not `core` — the server builds no Ktor client, so the engines must not reach its classpath. Keep the `expect` signature minimal and install plugins via the `block` parameter.
+- `core` has **no** platform source sets with code in them — every file in it is in `commonMain`. If you find yourself adding an `expect`/`actual` to `core`, the code almost certainly belongs in `app/shared` instead.
 - `SERVER_PORT` lives in `core/src/commonMain/kotlin/dev/jakubzika/befair/Constants.kt` — reference it by name, never hardcode a port.
 - Repositories expose observable state as `StateFlow<T>` backed by a private `MutableStateFlow`, and mutations as `suspend fun` — never return raw values from a repository.
 - `UserProfile` currently lives in `app/shared` (mobile-only), not `core` — move a model to `core` only once the server actually consumes it.
@@ -72,7 +72,7 @@ Use `gradle/libs.versions.toml` for versions and plugin aliases.
 
 ### Always do
 - Use `gradle/libs.versions.toml` for all dependency versions.
-- Wire new dependencies through the DI containers (`CoreContainer` or `AppContainer`).
+- Wire new dependencies through `AppContainer`.
 - Validate changes with the smallest relevant test or build command.
 
 ### Ask first

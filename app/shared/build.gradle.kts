@@ -21,8 +21,8 @@ compose.resources {
 }
 
 kotlin {
-    androidLibrary {
-        namespace = "dev.jakubzika.befair.composeapp"
+    android {
+        namespace = "dev.jakubzika.befair.app.shared"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
 
@@ -73,6 +73,13 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.uiTooling)
             implementation(libs.androidx.security.crypto)
+            // Ktor client engine for HttpClientFactory.android.kt
+            implementation(libs.ktor.client.okhttp)
+        }
+
+        iosMain.dependencies {
+            // Ktor client engine for HttpClientFactory.ios.kt
+            implementation(libs.ktor.client.darwin)
         }
 
         commonTest.dependencies {

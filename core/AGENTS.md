@@ -16,56 +16,48 @@ Mobile-only domain/data belongs in `app/shared`; server-only code belongs in `se
 ```
 core/src/
   commonMain/kotlin/dev/jakubzika/befair/
-    di/CoreContainer.kt         ← base dependency container
-    data/network/
-      HttpClientFactory.kt      ← expect declaration
+    domain/model/
+      AuthModels.kt             ← @Serializable auth DTOs
+      ItemModels.kt             ← @Serializable item DTOs + pure stats logic
+      SettingsModels.kt         ← @Serializable settings DTOs + option enums
     Constants.kt                ← shared constants (SERVER_PORT, etc.)
-    Platform.kt                 ← expect Platform name
-  androidMain/…                 ← actual implementations for Android
-  iosMain/…                     ← actual implementations for iOS
-  jvmMain/…                     ← actual implementations for JVM/server
   commonTest/…                  ← shared tests
 ```
 
-## Dependency Container
+**Every file in `core` is in `commonMain`.** The `android`, `ios*`, and `jvm` targets exist
+only so the module is *consumable* by `app/shared` (Android + iOS) and `server` (JVM) — they
+hold no source of their own.
 
-`CoreContainer` is the root DI container — **not a framework, just a plain class**.
+## No Dependency Container Here
 
-Rules:
-- All properties use `by lazy` to defer construction until first use.
-- Add new cross-platform dependencies as `val` properties here.
-- Mobile-specific dependencies go in `AppContainer` (`app/shared`), not here.
-- Never import Android or iOS symbols in `CoreContainer`.
+`core` has no DI container, because nothing in it is instantiated — DTOs, enums, and constants
+need no wiring. `AppContainer` in `app/shared` is the project's only container.
 
-Example — adding a new shared service:
-```kotlin
-class CoreContainer {
-    val httpClient: HttpClient by lazy { createHttpClient() }
-    val myService: MyService by lazy { MyServiceImpl(httpClient) }
-}
-```
+If you are tempted to add a container or a service to `core`, check who constructs it. If the
+answer is "the app", it belongs in `AppContainer`.
 
-## expect / actual Pattern
+## Dependencies: Keep This Module Thin
 
-Use this for anything with a platform-specific implementation.
+`commonMain` depends on **`kotlinx-serialization-json` and nothing else**. Treat that as a
+budget, not a coincidence:
 
-1. Declare `expect fun` or `expect class` in `commonMain`.
-2. Provide `actual fun` or `actual class` in each of `androidMain`, `iosMain`, `jvmMain`.
-3. Follow the `HttpClientFactory` pattern: keep the `expect` signature minimal.
+- `:server` consumes `:core`, so every dependency added here lands on the server's
+  `runtimeClasspath` and inside its Docker image, whether or not the server calls it.
+- Before adding a dependency, name the server code that needs it. If there is none, the
+  feature belongs in `app/shared`.
 
-```kotlin
-// commonMain
-expect fun createHttpClient(): HttpClient
+This is why the Ktor client lives in `app/shared`: the engines (`okhttp`, `darwin`) are
+mobile-only, and hosting them here shipped `ktor-client-cio` to the server for nothing.
 
-// androidMain
-actual fun createHttpClient(): HttpClient = HttpClient(OkHttp) { … }
+## expect / actual Pattern — Prefer `app/shared`
 
-// iosMain
-actual fun createHttpClient(): HttpClient = HttpClient(Darwin) { … }
+`core` currently has **no** `expect`/`actual` declarations, and that is the goal state. An
+abstraction needing a per-platform implementation is almost always platform *client* code, so
+it belongs in `app/shared` (`commonMain` + `androidMain`/`iosMain`) — see
+`app/shared/.../data/network/HttpClientFactory.kt`.
 
-// jvmMain
-actual fun createHttpClient(): HttpClient = HttpClient(CIO) { … }
-```
+Only add one here if the **server** genuinely calls it, which means writing a real JVM `actual`
+the server invokes. A JVM `actual` with no caller is the signal the code is misplaced.
 
 ## Constants
 
@@ -75,8 +67,8 @@ Add project-wide constants to `Constants.kt`. Reference them by name everywhere 
 
 ```shell
 # Unit tests (runs on JVM)
-./gradlew :core:testDebugUnitTest
+./gradlew :core:jvmTest
 
 # Check compilation for all targets
-./gradlew :core:compileKotlinAndroid :core:compileKotlinIosArm64 :core:compileKotlinJvm
+./gradlew :core:compileAndroidMain :core:compileKotlinIosArm64 :core:compileKotlinJvm
 ```

@@ -22,7 +22,7 @@ class ApplicationTest {
         }
         val response = client.get("/")
         assertEquals(HttpStatusCode.OK, response.status)
-        assertEquals("Ktor: ${Greeting().greet()}", response.bodyAsText())
+        assertEquals("BeFair server is running.", response.bodyAsText())
     }
 
     @Test

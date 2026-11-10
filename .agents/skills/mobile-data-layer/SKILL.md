@@ -27,13 +27,14 @@ stop and use the `core-shared-logic` skill instead — only genuinely multi-targ
   - Observable state: `val items: StateFlow<List<Name>>`.
   - Mutations: `suspend fun refresh()`, `suspend fun add(item: Name)`, etc.
 - [ ] **Repository implementation**: `app/shared/.../data/repository/<Name>RepositoryImpl.kt`
-  - Constructor-inject `HttpClient` only — get it from `coreContainer.httpClient`, never construct it.
+  - Constructor-inject `HttpClient` only — take one of `AppContainer`'s clients, never construct it.
+    Use `authHttpClient` for anything behind a bearer token; `httpClient` only for unauthenticated calls.
   - Back state with `private val _items = MutableStateFlow<List<Name>>(emptyList())`.
   - Expose as `override val items = _items.asStateFlow()`. Never return raw values from a repository.
 - [ ] **Wire DI** in `AppContainer` (`app/shared`):
   ```kotlin
   val <name>Repository: <Name>Repository by lazy {
-      <Name>RepositoryImpl(coreContainer.httpClient)
+      <Name>RepositoryImpl(authHttpClient)
   }
   ```
 - [ ] **Validate**: `./gradlew :app:shared:testDebugUnitTest`

@@ -80,7 +80,7 @@ fun Application.module() {
 
     routing {
         get("/") {
-            call.respondText("Ktor: ${Greeting().greet()}")
+            call.respondText("BeFair server is running.")
         }
         authRoutes(userRepository)
         itemRoutes(itemRepository)
