@@ -103,6 +103,8 @@ fun AuthTemplate(
     onContinueWithApple: () -> Unit,
     // Requests a reset email; [onResult] receives false only on a network failure.
     onSendReset: (email: String, onResult: (success: Boolean) -> Unit) -> Unit,
+    // Invoked on every mode switch so the hoisted [serverError] does not leak across modes.
+    onClearServerError: () -> Unit = {},
     isLoading: Boolean = false,
     serverError: String? = null,
     modifier: Modifier = Modifier
@@ -134,6 +136,14 @@ fun AuthTemplate(
     val passwordTooShortError = stringResource(Res.string.auth_error_password_too_short)
     val resetNetworkError = stringResource(Res.string.auth_error_reset_network)
 
+    // Single entry point for mode switches: the per-mode field errors reset through
+    // remember(mode), but the hoisted server error has to be cleared by its owner.
+    fun changeMode(target: AuthMode) {
+        if (target == mode) return
+        mode = target
+        onClearServerError()
+    }
+
     fun validateAndSubmit() {
         val isRegister = mode == AuthMode.Register
         val nextNameError = if (isRegister && name.isBlank()) nameRequiredError else null
@@ -164,7 +174,7 @@ fun AuthTemplate(
                 email = trimmed
                 resent = false
                 cooldown = RESEND_COOLDOWN_SECONDS
-                mode = AuthMode.Sent
+                changeMode(AuthMode.Sent)
             } else {
                 emailError = resetNetworkError
             }
@@ -250,7 +260,7 @@ fun AuthTemplate(
                     isLoading = isLoading,
                     serverError = serverError,
                     onSubmit = ::validateAndSubmit,
-                    onForgotPassword = { mode = AuthMode.Forgot },
+                    onForgotPassword = { changeMode(AuthMode.Forgot) },
                     onContinueWithGoogle = onContinueWithGoogle,
                     onContinueWithApple = onContinueWithApple
                 )
@@ -285,7 +295,7 @@ fun AuthTemplate(
                 SecondaryButton(
                     modifier = Modifier.fillMaxWidth(),
                     title = stringResource(Res.string.auth_back_to_sign_in),
-                    onClick = { mode = AuthMode.SignIn }
+                    onClick = { changeMode(AuthMode.SignIn) }
                 )
 
                 Spacer(modifier = Modifier.height(BeFairDimension.Spacing.sm))
@@ -301,7 +311,7 @@ fun AuthTemplate(
 
         Spacer(modifier = Modifier.height(BeFairDimension.Spacing.xl))
 
-        AuthFooter(mode = mode, onModeChange = { mode = it })
+        AuthFooter(mode = mode, onModeChange = ::changeMode)
     }
 }
 

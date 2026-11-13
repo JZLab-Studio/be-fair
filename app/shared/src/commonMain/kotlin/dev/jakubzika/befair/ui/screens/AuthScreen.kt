@@ -33,6 +33,7 @@ fun AuthScreen(
     AuthTemplate(
         isLoading = isLoading,
         serverError = serverError,
+        onClearServerError = { serverError = null },
         onSubmit = { mode, name, email, password ->
             serverError = null
             isLoading = true
