@@ -19,16 +19,16 @@
     <string name="auth_hide_password">Hide password</string>
     <string name="auth_continue_with_google">Continue with Google</string>
     <string name="auth_continue_with_apple">Continue with Apple</string>
-    <string name="auth_toggle_no_account">Don\'t have an account?</string>
+    <string name="auth_toggle_no_account">Don't have an account?</string>
     <string name="auth_toggle_has_account">Already have an account?</string>
     <string name="auth_toggle_create_one">Create one</string>
     <string name="auth_divider_or">or</string>
     <string name="auth_forgot_password">Forgot password?</string>
     <string name="auth_title_reset_password">Reset password</string>
-    <string name="auth_subtitle_reset_password">Enter the email you use for BeFair. We\'ll send a link to set a new password.</string>
+    <string name="auth_subtitle_reset_password">Enter the email you use for BeFair. We'll send a link to set a new password.</string>
     <string name="auth_send_reset_link">Send reset link</string>
     <string name="auth_sending">Sending…</string>
-    <string name="auth_error_reset_network">Couldn\'t send the email. Check your connection and try again.</string>
+    <string name="auth_error_reset_network">Couldn't send the email. Check your connection and try again.</string>
     <string name="auth_toggle_remembered">Remembered it?</string>
     <string name="auth_title_check_email">Check your email</string>
     <string name="auth_sent_body">If an account exists for %1$s, a reset link is on its way. It expires in 1 hour.</string>
@@ -65,7 +65,7 @@
     <string name="screen_overview_activity_meta">%1$s · %2$s</string>
 
     <!-- Overview screen — empty state -->
-    <string name="screen_overview_empty_welcome">Welcome, %1$s.</string>
+    <string name="screen_overview_empty_welcome">Welcome, %1$s</string>
     <string name="screen_overview_empty_welcome_no_name">Welcome!</string>
     <string name="screen_overview_empty_description">Nothing to measure yet. Add your first piece of clothing or a tool, and %1$s works out what it really costs each time you use it.</string>
     <string name="screen_overview_empty_add_first_item">Add your first item</string>
@@ -167,7 +167,7 @@
     <string name="screen_settings_currency_usd">US dollar</string>
     <string name="screen_settings_currency_custom">Custom</string>
     <string name="screen_settings_currency_custom_meta_empty">Your own name, e.g. CHF</string>
-    <string name="screen_settings_currency_hint">Amounts aren\'t converted. The currency only changes how prices are labelled.</string>
+    <string name="screen_settings_currency_hint">Amounts aren't converted. The currency only changes how prices are labelled.</string>
     <string name="screen_settings_custom_label">Currency name</string>
     <string name="screen_settings_custom_placeholder">e.g. CHF, zł, credits</string>
     <string name="screen_settings_custom_error">Enter a name for your currency.</string>
