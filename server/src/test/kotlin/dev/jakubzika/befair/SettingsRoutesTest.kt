@@ -16,6 +16,9 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import io.ktor.client.request.delete
+import dev.jakubzika.befair.PROFILE_PICTURE_MAX_BYTES
+import kotlin.test.assertContentEquals
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
@@ -114,5 +117,63 @@ class SettingsRoutesTest {
     fun `settings require a token`() = testApplication {
         application { module() }
         assertEquals(HttpStatusCode.Unauthorized, client.get("/api/settings").status)
+    }
+
+    private val png = byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 1, 2, 3)
+
+    @Test
+    fun `profile picture round-trips and keeps saved settings`() = testApplication {
+        application { module() }
+        val client = jsonClient()
+        val token = authedUser()
+        val settings = UserSettingsDto(CurrencyChoice.USD, "", ToolBasis.WEEK)
+        client.put("/api/settings") { bearer(token); contentType(ContentType.Application.Json); setBody(settings) }
+
+        val put = client.put("/api/settings/profile-picture") { bearer(token); setBody(png) }
+        assertEquals(HttpStatusCode.NoContent, put.status)
+
+        val get = client.get("/api/settings/profile-picture") { bearer(token) }
+        assertEquals(HttpStatusCode.OK, get.status)
+        assertEquals("image/png", get.headers[HttpHeaders.ContentType]?.substringBefore(";"))
+        assertContentEquals(png, get.body<ByteArray>())
+        assertEquals(settings, client.get("/api/settings") { bearer(token) }.body<UserSettingsDto>())
+
+        // Saving settings afterwards must not wipe the picture.
+        client.put("/api/settings") { bearer(token); contentType(ContentType.Application.Json); setBody(UserSettingsDto()) }
+        assertEquals(HttpStatusCode.OK, client.get("/api/settings/profile-picture") { bearer(token) }.status)
+
+        assertEquals(HttpStatusCode.NoContent, client.delete("/api/settings/profile-picture") { bearer(token) }.status)
+        assertEquals(HttpStatusCode.NotFound, client.get("/api/settings/profile-picture") { bearer(token) }.status)
+    }
+
+    @Test
+    fun `profile picture works before any settings were saved`() = testApplication {
+        application { module() }
+        val client = jsonClient()
+        val token = authedUser()
+
+        assertEquals(HttpStatusCode.NotFound, client.get("/api/settings/profile-picture") { bearer(token) }.status)
+        client.put("/api/settings/profile-picture") { bearer(token); setBody(png) }
+        assertEquals(UserSettingsDto(), client.get("/api/settings") { bearer(token) }.body<UserSettingsDto>())
+    }
+
+    @Test
+    fun `profile picture rejects non-images and oversized bodies`() = testApplication {
+        application { module() }
+        val client = jsonClient()
+        val token = authedUser()
+
+        val text = client.put("/api/settings/profile-picture") { bearer(token); setBody("not an image".toByteArray()) }
+        assertEquals(HttpStatusCode.UnsupportedMediaType, text.status)
+
+        val big = png + ByteArray(PROFILE_PICTURE_MAX_BYTES)
+        val tooBig = client.put("/api/settings/profile-picture") { bearer(token); setBody(big) }
+        assertEquals(HttpStatusCode.PayloadTooLarge, tooBig.status)
+    }
+
+    @Test
+    fun `profile picture requires a token`() = testApplication {
+        application { module() }
+        assertEquals(HttpStatusCode.Unauthorized, client.get("/api/settings/profile-picture").status)
     }
 }
