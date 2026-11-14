@@ -2,6 +2,11 @@ package dev.jakubzika.befair
 
 import dev.jakubzika.befair.auth.JwtConfig
 import dev.jakubzika.befair.data.db.UserRepository
+import dev.jakubzika.befair.data.db.UserSettings
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import kotlin.test.assertNotNull
 import dev.jakubzika.befair.domain.model.CurrencyChoice
 import dev.jakubzika.befair.domain.model.ToolBasis
 import dev.jakubzika.befair.domain.model.UserSettingsDto
@@ -54,6 +59,22 @@ class SettingsRoutesTest {
 
         assertEquals(HttpStatusCode.OK, response.status)
         assertEquals(UserSettingsDto(), response.body<UserSettingsDto>())
+    }
+
+    @Test
+    fun `creating a user persists default settings`() = testApplication {
+        application { module() }
+        client.get("/")
+        val userId = UserRepository().create("defaults-${UUID.randomUUID()}@example.com", "Test User", "hash")
+
+        val row = transaction {
+            UserSettings.selectAll().where { UserSettings.userId eq userId }.singleOrNull()
+        }
+
+        assertNotNull(row)
+        assertEquals("EUR", row[UserSettings.currency])
+        assertEquals("", row[UserSettings.customCurrency])
+        assertEquals("MONTH", row[UserSettings.toolBasis])
     }
 
     @Test
