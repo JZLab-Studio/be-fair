@@ -26,6 +26,7 @@ testcontainers = "2.0.5"
 bcrypt = "0.10.2"
 androidx-security = "1.1.0-alpha06"
 androidx-room = "2.8.4"
+imagepickerkmp = "1.1.8"
 androidx-sqlite = "2.6.2"
 ksp = "2.3.4"
 
@@ -59,6 +60,7 @@ ktor-client-contentNegotiation = { module = "io.ktor:ktor-client-content-negotia
 ktor-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktor" }
 jetbrains-navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "multiplatform-nav3-ui" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+imagepickerkmp = { module = "io.github.ismoy:imagepickerkmp", version.ref = "imagepickerkmp" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
 exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }

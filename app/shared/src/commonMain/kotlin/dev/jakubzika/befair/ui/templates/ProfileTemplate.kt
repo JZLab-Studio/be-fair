@@ -1,6 +1,7 @@
 package dev.jakubzika.befair.ui.templates
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,12 +27,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import be_fair.app.shared.generated.resources.Res
 import be_fair.app.shared.generated.resources.screen_profile_account
+import be_fair.app.shared.generated.resources.screen_profile_change_photo
 import be_fair.app.shared.generated.resources.screen_profile_preferences
 import be_fair.app.shared.generated.resources.screen_profile_settings
 import be_fair.app.shared.generated.resources.screen_profile_sign_out
@@ -66,7 +70,10 @@ fun ProfileTemplate(
     settingsSummary: String,
     onOpenSettings: () -> Unit,
     onSignOut: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    avatar: ImageBitmap? = null,
+    onAvatarClick: () -> Unit = {},
+    message: String? = null,
 ) {
     Column(
         modifier = modifier
@@ -94,7 +101,14 @@ fun ProfileTemplate(
                 .padding(BeFairDimension.Spacing.md),
             verticalArrangement = Arrangement.spacedBy(BeFairDimension.Spacing.md)
         ) {
-            ProfileCard(name = name, email = email)
+            ProfileCard(name = name, email = email, avatar = avatar, onAvatarClick = onAvatarClick)
+            if (message != null) {
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
 
             Section(title = stringResource(Res.string.screen_profile_preferences)) {
                 SettingsRow(summary = settingsSummary, onClick = onOpenSettings)
@@ -112,7 +126,7 @@ fun ProfileTemplate(
 }
 
 @Composable
-private fun ProfileCard(name: String, email: String) {
+private fun ProfileCard(name: String, email: String, avatar: ImageBitmap?, onAvatarClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -125,16 +139,31 @@ private fun ProfileCard(name: String, email: String) {
         Box(
             modifier = Modifier
                 .size(AvatarSize)
+                .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
-                .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), CircleShape),
+                .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), CircleShape)
+                .clickable(
+                    onClickLabel = stringResource(Res.string.screen_profile_change_photo),
+                    role = Role.Button,
+                    onClick = onAvatarClick
+                ),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = initialsOf(name),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1
-            )
+            if (avatar != null) {
+                Image(
+                    bitmap = avatar,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Text(
+                    text = initialsOf(name),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1
+                )
+            }
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(

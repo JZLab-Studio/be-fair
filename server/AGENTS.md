@@ -174,6 +174,8 @@ erDiagram
         string custom_currency "max 12 chars"
         string tool_basis "DAY | WEEK | MONTH | YEAR"
         long updated_at
+        bytes profile_picture "nullable, JPEG/PNG, max PROFILE_PICTURE_MAX_BYTES"
+        string profile_picture_type "image/jpeg | image/png"
     }
     USERS ||--o| USER_SETTINGS : "user_id (CASCADE)"
     USERS ||--o{ ITEMS : "user_id (CASCADE)"
@@ -186,6 +188,7 @@ erDiagram
 - **items.id** is a client-generated UUID string (36 chars) to prevent duplicates on retried creates after flaky networks. All FKs from item_events cascade on delete.
 - **item_events** uses a single table with a `type` discriminator (wear/wash/use/repair/etc.) to calculate cost-per-use and cost-per-month without per-kind counter columns on items.
 - **user_settings** has at most one row per user; `GET /api/settings` returns defaults when none exists and `PUT /api/settings` replaces the whole set (upsert). The DTO and option enums live in `core` (`SettingsModels.kt`).
+- **Profile picture** lives on the `user_settings` row (`profile_picture`, `profile_picture_type`). `GET`/`PUT`/`DELETE /api/settings/profile-picture` move the raw bytes (404 when none). The server detects JPEG/PNG from the file signature, rejects other data with 415 and bodies over `PROFILE_PICTURE_MAX_BYTES` with 413. `saveProfilePicture` upserts excluding the settings columns, so uploading never resets saved settings and saving settings never clears the picture.
 - **Soft deletes:** items and item_events have `deleted_at` columns; queries should filter `WHERE deleted_at IS NULL` when appropriate.
 - **Indices:** `items(user_id)` enables fast per-user queries; `item_events(item_id, occurred_at)` enables efficient cost calculations and event history lookups.
 
