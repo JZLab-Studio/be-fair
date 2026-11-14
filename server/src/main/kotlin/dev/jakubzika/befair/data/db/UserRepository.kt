@@ -1,5 +1,6 @@
 package dev.jakubzika.befair.data.db
 
+import dev.jakubzika.befair.domain.model.UserSettingsDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -30,14 +31,26 @@ class UserRepository {
             .singleOrNull()
     }
 
-    /** Inserts a new, unverified user and returns its generated id. */
+    /**
+     * Inserts a new, unverified user together with its default settings (see [UserSettingsDto])
+     * in one transaction, and returns the generated id.
+     */
     suspend fun create(email: String, displayName: String, passwordHash: String): Int = dbQuery {
-        Users.insert {
+        val userId = Users.insert {
             it[Users.email] = email
             it[Users.displayName] = displayName
             it[Users.passwordHash] = passwordHash
             it[Users.isVerified] = false
         }[Users.id]
+        val defaults = UserSettingsDto()
+        UserSettings.insert {
+            it[UserSettings.userId] = userId
+            it[currency] = defaults.currency.name
+            it[customCurrency] = defaults.customCurrency
+            it[toolBasis] = defaults.toolBasis.name
+            it[updatedAt] = System.currentTimeMillis()
+        }
+        userId
     }
 
     suspend fun updatePasswordHash(email: String, passwordHash: String) {
