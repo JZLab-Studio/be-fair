@@ -74,6 +74,11 @@ fun App() {
             @Suppress("UNCHECKED_CAST")
             val backStack: NavBackStack<Route> = rememberNavBackStack(config, SignIn) as NavBackStack<Route>
 
+            // Token refresh failed (data already wiped): go back to sign-in as on a fresh install.
+            LaunchedEffect(appContainer) {
+                appContainer.sessionExpired.collect { backStack.resetTo(SignIn) }
+            }
+
             NavDisplay(
                 modifier = Modifier.fillMaxSize(),
                 backStack = backStack,

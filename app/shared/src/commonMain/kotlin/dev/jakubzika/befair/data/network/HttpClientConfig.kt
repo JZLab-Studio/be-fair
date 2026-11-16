@@ -5,6 +5,7 @@ import dev.jakubzika.befair.domain.model.RefreshRequest
 import dev.jakubzika.befair.domain.model.TokenResponse
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
+import io.ktor.client.plugins.ResponseException
 import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.bearer
@@ -15,6 +16,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Mobile client auth configuration, applied on top of core's [createHttpClient] base
@@ -23,7 +25,11 @@ import kotlinx.serialization.json.Json
  *  - Bearer auth that loads tokens from [tokenStorage] and transparently refreshes a 401
  *    via POST /api/auth/refresh, persisting the rotated pair
  */
-fun HttpClientConfig<*>.configureBeFair(tokenStorage: TokenStorage) {
+fun HttpClientConfig<*>.configureBeFair(
+    tokenStorage: TokenStorage,
+    // Invoked when the refresh call fails: the session is gone and all user data must be wiped.
+    onSessionExpired: suspend () -> Unit = {},
+) {
     install(ContentNegotiation) {
         json(
             Json {
@@ -54,8 +60,15 @@ fun HttpClientConfig<*>.configureBeFair(tokenStorage: TokenStorage) {
                     }.body()
                     tokenStorage.saveTokens(response.accessToken, response.refreshToken)
                     BearerTokens(response.accessToken, response.refreshToken)
-                } catch (_: Exception) {
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: ResponseException) {
+                    // Server rejected the refresh token: the session is over.
                     tokenStorage.clearTokens()
+                    onSessionExpired()
+                    null
+                } catch (_: Exception) {
+                    // Transient failure (e.g. offline): keep the session and data, fail this request only.
                     null
                 }
             }

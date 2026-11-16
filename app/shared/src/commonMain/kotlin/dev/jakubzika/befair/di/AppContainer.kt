@@ -18,6 +18,9 @@ import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 /**
  * Mobile dependency container. Holds mobile platform use-cases, repositories, and controllers.
@@ -35,8 +38,19 @@ class AppContainer {
 
     // Client carrying JSON + bearer auth (with transparent refresh) for authenticated calls.
     private val authHttpClient: HttpClient by lazy {
-        createHttpClient { configureBeFair(tokenStorage) }
+        createHttpClient {
+            configureBeFair(tokenStorage) {
+                // Refresh failed: wipe all user data, then tell the UI to return to sign-in.
+                authRepository.logout()
+                _sessionExpired.tryEmit(Unit)
+            }
+        }
     }
+
+    private val _sessionExpired = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    // Emits when the session can no longer be refreshed and data has been cleared.
+    val sessionExpired: SharedFlow<Unit> = _sessionExpired.asSharedFlow()
 
     // Unconfigured client for calls that carry no credentials.
     private val httpClient: HttpClient by lazy { createHttpClient() }
