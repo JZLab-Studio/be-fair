@@ -5,7 +5,7 @@ import dev.jakubzika.befair.domain.model.RefreshRequest
 import dev.jakubzika.befair.domain.model.TokenResponse
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
-import io.ktor.client.plugins.ResponseException
+import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.bearer
@@ -23,12 +23,12 @@ import kotlin.coroutines.cancellation.CancellationException
  * (which already sets expectSuccess + timeouts). Installs:
  *  - JSON content negotiation
  *  - Bearer auth that loads tokens from [tokenStorage] and transparently refreshes a 401
- *    via POST /api/auth/refresh, persisting the rotated pair
+ *    via POST /api/auth/refresh, persisting the rotated pair.
+ *    When the server rejects the refresh token, tokens are cleared and [onSessionExpired] is invoked
  */
 fun HttpClientConfig<*>.configureBeFair(
     tokenStorage: TokenStorage,
-    // Invoked when the refresh call fails: the session is gone and all user data must be wiped.
-    onSessionExpired: suspend () -> Unit = {},
+    onSessionExpired: () -> Unit = {},
 ) {
     install(ContentNegotiation) {
         json(
@@ -60,15 +60,15 @@ fun HttpClientConfig<*>.configureBeFair(
                     }.body()
                     tokenStorage.saveTokens(response.accessToken, response.refreshToken)
                     BearerTokens(response.accessToken, response.refreshToken)
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (_: ResponseException) {
-                    // Server rejected the refresh token: the session is over.
+                } catch (e: ClientRequestException) {
+                    // The server rejected the refresh token: the session is over.
                     tokenStorage.clearTokens()
                     onSessionExpired()
                     null
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (_: Exception) {
-                    // Transient failure (e.g. offline): keep the session and data, fail this request only.
+                    // Network/server trouble: keep the tokens so a later request can retry.
                     null
                 }
             }

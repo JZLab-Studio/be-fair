@@ -72,11 +72,17 @@ fun App() {
                 }
             }
             @Suppress("UNCHECKED_CAST")
-            val backStack: NavBackStack<Route> = rememberNavBackStack(config, SignIn) as NavBackStack<Route>
+            val backStack: NavBackStack<Route> = rememberNavBackStack(
+                config,
+                // A stored token pair survives process death; skip sign-in when it is present.
+                if (appContainer.authRepository.isLoggedIn()) Main else SignIn,
+            ) as NavBackStack<Route>
 
-            // Token refresh failed (data already wiped): go back to sign-in as on a fresh install.
-            LaunchedEffect(appContainer) {
-                appContainer.sessionExpired.collect { backStack.resetTo(SignIn) }
+            // A rejected refresh token means the session is over: return to sign-in.
+            LaunchedEffect(appContainer, backStack) {
+                appContainer.sessionExpired.collect {
+                    if (backStack.lastOrNull() == Main) backStack.resetTo(SignIn)
+                }
             }
 
             NavDisplay(
