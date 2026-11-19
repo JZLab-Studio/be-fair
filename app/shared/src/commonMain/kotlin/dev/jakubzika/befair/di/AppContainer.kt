@@ -20,6 +20,10 @@ import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
 
 /**
  * Mobile dependency container. Holds mobile platform use-cases, repositories, and controllers.
@@ -35,12 +39,22 @@ class AppContainer {
     // Platform-backed user profile storage (EncryptedSharedPreferences / UserDefaults / Preferences).
     val userProfileStorage: UserProfileStorage by lazy { UserProfileStorage() }
 
+    private val _sessionExpired = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    /** Emits when the refresh token was rejected; the UI must send the user back to sign-in. */
+    val sessionExpired: SharedFlow<Unit> = _sessionExpired.asSharedFlow()
+
+    private fun onSessionExpired() {
+        appScope.launch {
+            // Same cleanup as a manual sign-out (tokens, profile, cached items and settings).
+            authRepository.logout()
+            _sessionExpired.emit(Unit)
+        }
+    }
+
     // Client carrying JSON + bearer auth (with transparent refresh) for authenticated calls.
     private val authHttpClient: HttpClient by lazy {
-        createHttpClient {
-            // Drop the previous account's avatar when the session dies outside the sign-out button.
-            configureBeFair(tokenStorage) { profilePictureRepository.clear() }
-        }
+        createHttpClient { configureBeFair(tokenStorage, ::onSessionExpired) }
     }
 
     // Unconfigured client for calls that carry no credentials.
