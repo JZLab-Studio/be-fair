@@ -24,18 +24,26 @@ class ProfilePictureRepositoryImpl(private val client: HttpClient) : ProfilePict
     private val _picture = MutableStateFlow<ByteArray?>(null)
     override val picture: StateFlow<ByteArray?> = _picture.asStateFlow()
 
-    override suspend fun refresh(): AppResult<Unit> = safeCall {
-        _picture.value = try {
-            client.get("$API_BASE_URL/api/settings/profile-picture").body<ByteArray>()
-        } catch (e: ResponseException) {
-            if (e.response.status != HttpStatusCode.NotFound) throw e
-            null
+    // Bumped by every local mutation (upload, clear). A refresh that started before a mutation
+    // is stale by the time it returns and must not overwrite the newer value.
+    private var generation = 0
+
+    override suspend fun refresh(): AppResult<Unit> {
+        val startedAt = generation
+        return safeCall {
+            val fetched = try {
+                client.get("$API_BASE_URL/api/settings/profile-picture").body<ByteArray>()
+            } catch (e: ResponseException) {
+                if (e.response.status != HttpStatusCode.NotFound) throw e
+                null
+            }
+            if (generation == startedAt) _picture.value = fetched
         }
     }
 
     override suspend fun upload(bytes: ByteArray): AppResult<Unit> {
         if (bytes.isEmpty() || bytes.size > PROFILE_PICTURE_MAX_BYTES) {
-            return AppResult.Error("The picture is too large.")
+            return AppResult.Error("Invalid picture size.")
         }
         return safeCall {
             client.put("$API_BASE_URL/api/settings/profile-picture") {
@@ -43,11 +51,13 @@ class ProfilePictureRepositoryImpl(private val client: HttpClient) : ProfilePict
                 contentType(ContentType.Application.OctetStream)
                 setBody(bytes)
             }
+            generation++
             _picture.value = bytes
         }
     }
 
     override fun clear() {
+        generation++
         _picture.value = null
     }
 }

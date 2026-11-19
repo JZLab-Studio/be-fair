@@ -21,6 +21,8 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import io.ktor.http.content.OutgoingContent
+import io.ktor.utils.io.ByteReadChannel
 import io.ktor.client.request.delete
 import dev.jakubzika.befair.PROFILE_PICTURE_MAX_BYTES
 import kotlin.test.assertContentEquals
@@ -190,6 +192,47 @@ class SettingsRoutesTest {
         val big = png + ByteArray(PROFILE_PICTURE_MAX_BYTES)
         val tooBig = client.put("/api/settings/profile-picture") { bearer(token); setBody(big) }
         assertEquals(HttpStatusCode.PayloadTooLarge, tooBig.status)
+    }
+
+    @Test
+    fun `profile picture rejects an oversized body without a declared length`() = testApplication {
+        application { module() }
+        val client = jsonClient()
+        val token = authedUser()
+
+        val big = png + ByteArray(PROFILE_PICTURE_MAX_BYTES * 2)
+        val chunked = client.put("/api/settings/profile-picture") {
+            bearer(token)
+            setBody(object : OutgoingContent.ReadChannelContent() {
+                override val contentLength: Long? = null
+                override fun readFrom(): ByteReadChannel = ByteReadChannel(big)
+            })
+        }
+        assertEquals(HttpStatusCode.PayloadTooLarge, chunked.status)
+        assertEquals(HttpStatusCode.NotFound, client.get("/api/settings/profile-picture") { bearer(token) }.status)
+    }
+
+    @Test
+    fun `profile picture with a valid header and corrupt content is accepted as is`() = testApplication {
+        application { module() }
+        val client = jsonClient()
+        val token = authedUser()
+
+        // Only the signature is validated; decoding is left to the client, which falls back to initials.
+        assertEquals(HttpStatusCode.NoContent, client.put("/api/settings/profile-picture") { bearer(token); setBody(png) }.status)
+        assertContentEquals(png, client.get("/api/settings/profile-picture") { bearer(token) }.body<ByteArray>())
+    }
+
+    @Test
+    fun `settings GET returns defaults for a user whose row only has a picture`() = testApplication {
+        application { module() }
+        val client = jsonClient()
+        val token = authedUser()
+
+        client.put("/api/settings/profile-picture") { bearer(token); setBody(png) }
+        val response = client.get("/api/settings") { bearer(token) }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals(UserSettingsDto(), response.body<UserSettingsDto>())
     }
 
     @Test

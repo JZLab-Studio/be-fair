@@ -9,7 +9,6 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.jdbc.select
-import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.upsert
@@ -25,7 +24,8 @@ class UserSettingsRepository {
 
     /** The user's saved settings, or the defaults when they never saved any. */
     suspend fun find(userId: Int): UserSettingsDto = dbQuery {
-        UserSettings.selectAll()
+        // Project only the settings columns so the picture blob is never read here.
+        UserSettings.select(UserSettings.currency, UserSettings.customCurrency, UserSettings.toolBasis)
             .where { UserSettings.userId eq userId }
             .map {
                 UserSettingsDto(

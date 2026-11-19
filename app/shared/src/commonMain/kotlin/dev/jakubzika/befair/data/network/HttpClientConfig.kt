@@ -21,9 +21,10 @@ import kotlinx.serialization.json.Json
  * (which already sets expectSuccess + timeouts). Installs:
  *  - JSON content negotiation
  *  - Bearer auth that loads tokens from [tokenStorage] and transparently refreshes a 401
- *    via POST /api/auth/refresh, persisting the rotated pair
+ *    via POST /api/auth/refresh, persisting the rotated pair; when the refresh fails the tokens
+ *    are cleared and [onSessionExpired] runs
  */
-fun HttpClientConfig<*>.configureBeFair(tokenStorage: TokenStorage) {
+fun HttpClientConfig<*>.configureBeFair(tokenStorage: TokenStorage, onSessionExpired: () -> Unit = {}) {
     install(ContentNegotiation) {
         json(
             Json {
@@ -56,6 +57,7 @@ fun HttpClientConfig<*>.configureBeFair(tokenStorage: TokenStorage) {
                     BearerTokens(response.accessToken, response.refreshToken)
                 } catch (_: Exception) {
                     tokenStorage.clearTokens()
+                    onSessionExpired()
                     null
                 }
             }

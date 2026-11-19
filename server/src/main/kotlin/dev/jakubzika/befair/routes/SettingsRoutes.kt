@@ -17,6 +17,10 @@ import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
 import io.ktor.server.request.receive
+import io.ktor.server.request.receiveChannel
+import io.ktor.utils.io.cancel
+import io.ktor.utils.io.readRemaining
+import kotlinx.io.readByteArray
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
@@ -90,13 +94,14 @@ private fun Route.profilePictureRoutes(repo: UserSettingsRepository) {
             if (declared != null && declared > PROFILE_PICTURE_MAX_BYTES) {
                 return@put call.respondPictureError(HttpStatusCode.PayloadTooLarge, "Picture is too large.")
             }
-            val bytes = call.receive<ByteArray>()
+            // Bounded read: never buffer more than the cap + 1 byte, even for chunked bodies.
+            val bytes = call.receiveBoundedBytes(PROFILE_PICTURE_MAX_BYTES)
             if (bytes.size > PROFILE_PICTURE_MAX_BYTES) {
                 return@put call.respondPictureError(HttpStatusCode.PayloadTooLarge, "Picture is too large.")
             }
             val type = sniffImageType(bytes)
                 ?: return@put call.respondPictureError(
-                    HttpStatusCode.UnsupportedMediaType, "Picture must be a JPEG or PNG image.",
+                    HttpStatusCode.UnsupportedMediaType, "Picture must start with a JPEG or PNG signature.",
                 )
             repo.saveProfilePicture(userId, ProfilePicture(bytes, type))
             call.respond(HttpStatusCode.NoContent)
@@ -107,6 +112,17 @@ private fun Route.profilePictureRoutes(repo: UserSettingsRepository) {
             call.respond(HttpStatusCode.NoContent)
         }
     }
+}
+
+/**
+ * Reads at most [limit] + 1 bytes of the request body (so a result larger than [limit] signals
+ * an oversized body) and cancels the rest of the input instead of buffering it.
+ */
+private suspend fun ApplicationCall.receiveBoundedBytes(limit: Int): ByteArray {
+    val channel = receiveChannel()
+    val bytes = channel.readRemaining(limit.toLong() + 1).readByteArray()
+    if (bytes.size > limit) channel.cancel(null)
+    return bytes
 }
 
 private suspend fun ApplicationCall.respondPictureError(status: HttpStatusCode, message: String) =

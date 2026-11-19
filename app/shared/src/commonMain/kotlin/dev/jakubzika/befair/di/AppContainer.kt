@@ -37,7 +37,10 @@ class AppContainer {
 
     // Client carrying JSON + bearer auth (with transparent refresh) for authenticated calls.
     private val authHttpClient: HttpClient by lazy {
-        createHttpClient { configureBeFair(tokenStorage) }
+        createHttpClient {
+            // Drop the previous account's avatar when the session dies outside the sign-out button.
+            configureBeFair(tokenStorage) { profilePictureRepository.clear() }
+        }
     }
 
     // Unconfigured client for calls that carry no credentials.
@@ -49,11 +52,13 @@ class AppContainer {
     val authRepository: AuthRepository by lazy {
         AuthRepositoryImpl(
             authHttpClient, tokenStorage, userProfileStorage, database.itemDao(), database.settingsDao(),
-        ) {
-            // Prefetch items and settings once the user is signed in; failures fall back to the cache.
-            itemRepository.refresh()
-            settingsRepository.sync()
-        }
+            onSignedIn = {
+                // Prefetch items and settings once the user is signed in; failures fall back to the cache.
+                itemRepository.refresh()
+                settingsRepository.sync()
+            },
+            onSignedOut = { profilePictureRepository.clear() },
+        )
     }
 
     val profileRepository: ProfileRepository by lazy {

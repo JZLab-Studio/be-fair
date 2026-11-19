@@ -83,11 +83,12 @@ fun ProfileScreen(
     LaunchedEffect(result) {
         if (result is ImagePickerResult.Success) {
             val bytes = result.photos.firstOrNull()?.loadBytes()
-            picker.reset()
             failed = bytes == null || bytes.isEmpty() || pictureRepository.upload(bytes) is AppResult.Error
-        } else if (result is ImagePickerResult.Error) {
+            // Reset last: it changes the effect key and would cancel the upload above if done earlier.
             picker.reset()
+        } else if (result is ImagePickerResult.Error) {
             failed = true
+            picker.reset()
         }
     }
 
@@ -105,7 +106,6 @@ fun ProfileScreen(
         onSignOut = {
             scope.launch {
                 container.authRepository.logout()
-                pictureRepository.clear()
                 onSignOut()
             }
         },

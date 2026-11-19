@@ -152,7 +152,7 @@ private fun ProfileCard(name: String, email: String, avatar: ImageBitmap?, onAva
             if (avatar != null) {
                 Image(
                     bitmap = avatar,
-                    contentDescription = null,
+                    contentDescription = stringResource(Res.string.screen_profile_change_photo),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
                 )
