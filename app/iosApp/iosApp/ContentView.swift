@@ -4,7 +4,8 @@ import ComposeApp
 
 struct ComposeView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
-        MainViewControllerKt.MainViewController()
+        let mode = Bundle.main.object(forInfoDictionaryKey: "BeFairAppMode") as? String
+        return MainViewControllerKt.MainViewController(appMode: mode)
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}

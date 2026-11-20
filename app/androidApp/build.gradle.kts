@@ -20,9 +20,18 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    buildFeatures {
+        buildConfig = true
+    }
     buildTypes {
+        getByName("debug") {
+            buildConfigField("String", "APP_MODE", "\"DEV\"")
+        }
         getByName("release") {
-            isMinifyEnabled = false
+            buildConfigField("String", "APP_MODE", "\"PROD\"")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
     compileOptions {
@@ -34,5 +43,7 @@ android {
 dependencies {
     implementation(projects.app.shared)
     implementation(libs.androidx.activity.compose)
+    // @Preview annotation is referenced from main sources, so release compilation needs it too.
+    implementation(compose.preview)
     debugImplementation(compose.uiTooling)
 }

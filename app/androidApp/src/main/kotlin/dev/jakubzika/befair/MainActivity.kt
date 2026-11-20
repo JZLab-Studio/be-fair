@@ -6,6 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import dev.jakubzika.befair.config.AppConfig
+import dev.jakubzika.befair.config.AppMode
 import dev.jakubzika.befair.data.storage.BeFairAndroidContext
 
 class MainActivity : ComponentActivity() {
@@ -13,6 +15,7 @@ class MainActivity : ComponentActivity() {
         // Provide the application context to core (needed by EncryptedSharedPreferences-backed
         // TokenStorage) before any AppContainer / TokenStorage is constructed in App().
         BeFairAndroidContext.init(applicationContext)
+        AppConfig.initialize(AppMode.parse(BuildConfig.APP_MODE))
 
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)

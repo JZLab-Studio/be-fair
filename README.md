@@ -77,6 +77,48 @@ OR run shell command:
 2. Select a simulator or physical device.
 3. Click "Run".
 
+#### Build modes
+
+The mobile app has two modes. Each host reports its mode once at startup, and the shared code
+derives the API base URL and logging from it. A missing or unrecognized mode is treated as PROD.
+
+| | DEV | PROD |
+|---|---|---|
+| Android | `debug` variant | `release` variant |
+| iOS | `Debug` configuration | `Release` configuration |
+| API base URL | `http://10.0.2.2:8080` (Android emulator), `http://localhost:8080` (iOS simulator) | the production URL set at build time (HTTPS only) |
+| Logging | Application logs and HTTP request/response headers; `Authorization` values are redacted | None |
+| Android minification | Off | R8 shrinking and resource shrinking on |
+
+**Run DEV.** On Android, run the `debug` variant: `./gradlew :app:androidApp:assembleDebug`, or
+the `app.androidApp` run configuration. On iOS, run from Xcode with the `Debug` configuration
+(the default for Run). Neither needs a production URL. Start the backend first (see
+[Backend](#backend)).
+
+**Build release.** Release builds need the production URL, which is baked into the app at build
+time. Pass it as a Gradle property or an environment variable:
+
+```shell
+./gradlew :app:androidApp:assembleRelease -Pbefair.productionUrl=https://api.example.com
+# or
+BEFAIR_PRODUCTION_URL=https://api.example.com ./gradlew :app:androidApp:assembleRelease
+```
+
+- If both are set, the Gradle property wins.
+- The URL must start with `https://`. The build fails if it is missing or uses another scheme.
+- A trailing `/` is removed.
+- iOS `Release` builds in Xcode get the URL through the same Gradle resolution: Xcode runs
+  `embedAndSignAppleFrameworkForXcode`, which reads `BEFAIR_PRODUCTION_URL` from the environment
+  (or `befair.productionUrl` from `~/.gradle/gradle.properties`). The build fails if neither is
+  valid.
+
+**R8 mapping file.** Release builds are minified. To deobfuscate crash stack traces, keep the
+mapping file from each released build:
+
+```
+app/androidApp/build/outputs/mapping/release/mapping.txt
+```
+
 #### Backend
 
 The server needs a PostgreSQL database. The quickest way to get the whole stack up is Docker:
