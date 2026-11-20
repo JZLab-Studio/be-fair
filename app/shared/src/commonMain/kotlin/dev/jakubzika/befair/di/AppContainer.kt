@@ -3,6 +3,7 @@ package dev.jakubzika.befair.di
 import dev.jakubzika.befair.data.local.BeFairDatabase
 import dev.jakubzika.befair.data.local.createBeFairDatabase
 import dev.jakubzika.befair.data.network.configureBeFair
+import dev.jakubzika.befair.data.network.configureLogging
 import dev.jakubzika.befair.data.network.createHttpClient
 import dev.jakubzika.befair.data.repository.AuthRepositoryImpl
 import dev.jakubzika.befair.data.repository.ItemRepositoryImpl
@@ -52,11 +53,14 @@ class AppContainer {
 
     // Client carrying JSON + bearer auth (with transparent refresh) for authenticated calls.
     private val authHttpClient: HttpClient by lazy {
-        createHttpClient { configureBeFair(tokenStorage, ::onSessionExpired) }
+        createHttpClient {
+            configureBeFair(tokenStorage, ::onSessionExpired)
+            configureLogging()
+        }
     }
 
     // Unconfigured client for calls that carry no credentials.
-    private val httpClient: HttpClient by lazy { createHttpClient() }
+    private val httpClient: HttpClient by lazy { createHttpClient { configureLogging() } }
 
     // On-device Room cache; the server stays the source of truth.
     val database: BeFairDatabase by lazy { createBeFairDatabase() }

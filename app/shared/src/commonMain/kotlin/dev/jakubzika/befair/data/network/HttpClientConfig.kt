@@ -1,5 +1,7 @@
 package dev.jakubzika.befair.data.network
 
+import dev.jakubzika.befair.config.AppConfig
+import dev.jakubzika.befair.config.consoleLog
 import dev.jakubzika.befair.data.storage.TokenStorage
 import dev.jakubzika.befair.domain.model.RefreshRequest
 import dev.jakubzika.befair.domain.model.TokenResponse
@@ -10,9 +12,13 @@ import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
@@ -73,5 +79,23 @@ fun HttpClientConfig<*>.configureBeFair(
                 }
             }
         }
+    }
+}
+
+/**
+ * Installs request/response logging in DEV only. Level is HEADERS so bodies (passwords, OTP codes)
+ * are never logged, and the Authorization header value is redacted.
+ */
+fun HttpClientConfig<*>.configureLogging(
+    isDev: Boolean = AppConfig.isDev,
+    sink: (String) -> Unit = ::consoleLog,
+) {
+    if (!isDev) return
+    install(Logging) {
+        logger = object : Logger {
+            override fun log(message: String) = sink(message)
+        }
+        level = LogLevel.HEADERS
+        sanitizeHeader { header -> header.equals(HttpHeaders.Authorization, ignoreCase = true) }
     }
 }
