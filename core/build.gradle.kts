@@ -16,6 +16,8 @@ kotlin {
         }
     }
 
+    // No consumer builds core for iosX64 (app/shared dropped it, the server is JVM); kept as a harmless
+    // declaration so core stays usable on Intel simulators if a future consumer needs it.
     iosX64()
     iosArm64()
     iosSimulatorArm64()

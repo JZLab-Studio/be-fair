@@ -6,12 +6,14 @@ import dev.jakubzika.befair.data.network.configureBeFair
 import dev.jakubzika.befair.data.network.createHttpClient
 import dev.jakubzika.befair.data.repository.AuthRepositoryImpl
 import dev.jakubzika.befair.data.repository.ItemRepositoryImpl
+import dev.jakubzika.befair.data.repository.ProfilePictureRepositoryImpl
 import dev.jakubzika.befair.data.repository.ProfileRepositoryImpl
 import dev.jakubzika.befair.data.repository.SettingsRepositoryImpl
 import dev.jakubzika.befair.data.storage.TokenStorage
 import dev.jakubzika.befair.data.storage.UserProfileStorage
 import dev.jakubzika.befair.domain.repository.AuthRepository
 import dev.jakubzika.befair.domain.repository.ItemRepository
+import dev.jakubzika.befair.domain.repository.ProfilePictureRepository
 import dev.jakubzika.befair.domain.repository.ProfileRepository
 import dev.jakubzika.befair.domain.repository.SettingsRepository
 import io.ktor.client.HttpClient
@@ -64,15 +66,22 @@ class AppContainer {
     val authRepository: AuthRepository by lazy {
         AuthRepositoryImpl(
             authHttpClient, tokenStorage, userProfileStorage, database.itemDao(), database.settingsDao(),
-        ) {
-            // Prefetch items and settings once the user is signed in; failures fall back to the cache.
-            itemRepository.refresh()
-            settingsRepository.sync()
-        }
+            onSignedIn = {
+                // Prefetch items and settings once the user is signed in; failures fall back to the cache.
+                itemRepository.refresh()
+                settingsRepository.sync()
+            },
+            onSignedOut = { profilePictureRepository.clear() },
+        )
     }
 
     val profileRepository: ProfileRepository by lazy {
         ProfileRepositoryImpl(httpClient)
+    }
+
+    // Cropped profile picture, stored server-side next to the settings.
+    val profilePictureRepository: ProfilePictureRepository by lazy {
+        ProfilePictureRepositoryImpl(authHttpClient)
     }
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)

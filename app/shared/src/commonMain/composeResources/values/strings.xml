@@ -158,6 +158,8 @@
     <string name="screen_profile_currency_custom">Custom (%1$s)</string>
     <string name="screen_profile_account">Account</string>
     <string name="screen_profile_sign_out">Sign out</string>
+    <string name="screen_profile_change_photo">Change profile picture</string>
+    <string name="screen_profile_photo_failed">Could not update the profile picture.</string>
 
     <!-- Settings screen -->
     <string name="screen_settings_title">Settings</string>
