@@ -33,6 +33,8 @@ class AuthRepositoryImpl(
     private val settingsDao: SettingsDao,
     // Best-effort hook run after a successful sign-in (e.g. to prefetch items); its outcome never fails login.
     private val onSignedIn: suspend () -> Unit = {},
+    // Run whenever the session ends via logout, so per-account in-memory state can be dropped.
+    private val onSignedOut: () -> Unit = {},
 ): AuthRepository {
 
     override suspend fun register(name: String, email: String, password: String): AppResult<Unit> = safeCall {
@@ -91,6 +93,7 @@ class AuthRepositoryImpl(
         // Drop the previous account's cached items so they never show for the next user.
         itemDao.clear()
         settingsDao.clear()
+        onSignedOut()
     }
 
     override fun isLoggedIn(): Boolean =

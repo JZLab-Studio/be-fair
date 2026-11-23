@@ -12,6 +12,7 @@ Be-Fair is application that allows you to track cost-effectiveness of your wared
 
 - Kotlin Multiplatform
 - Backend: [Ktor](https://ktor.io/) server (Netty)
+- Profile picture picking/cropping: [ImagePickerKMP](https://klibs.io/project/ismoy/ImagePickerKMP) (no `iosX64` build, so `app/shared` targets `iosArm64` + `iosSimulatorArm64` only, so Intel-Mac simulator builds of the app are not supported; `core` still declares `iosX64` but nothing consumes it)
 - Mobile UI: [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) (Material 3), Navigation 3
 - DI: Manual container (no framework)
 

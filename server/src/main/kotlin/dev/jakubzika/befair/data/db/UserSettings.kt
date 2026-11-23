@@ -13,6 +13,8 @@ object UserSettings : Table("user_settings") {
     val customCurrency = varchar("custom_currency", 12)
     val toolBasis = varchar("tool_basis", 8)
     val updatedAt = long("updated_at")
+    val profilePicture = binary("profile_picture").nullable()
+    val profilePictureType = varchar("profile_picture_type", 32).nullable()
 
     override val primaryKey = PrimaryKey(userId)
 }
